@@ -8,13 +8,33 @@
 
 <div class="mb-8">
     <h1 class="text-3xl font-display font-bold text-foreground mb-2">Badge</h1>
-    <p class="text-muted-foreground">Small labels for status, counts, or categories.</p>
+    <p class="text-muted-foreground">Small labels for status, counts, or categories, in filled, soft, and outlined styles.</p>
 </div>
 
 <div class="space-y-6">
     <div class="p-6 rounded-3xl bg-card border border-border">
         <h3 class="font-semibold text-foreground mb-1">Colors</h3>
         <WaxTab Variant="WaxTabVariant.Primary" Tabs="_colorsTabs" TabListClass="mb-4" />
+    </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h3 class="font-semibold text-foreground mb-1">Custom Colors</h3>
+        <p class="mb-3 text-[13px] text-muted-foreground">
+            Pass any theme token with <code class="bg-muted px-1.5 py-0.5 rounded text-xs">new WaxColor("chart-4")</code>
+            or an explicit CSS value with <code class="bg-muted px-1.5 py-0.5 rounded text-xs">WaxColor.Custom("#3A8FA8")</code>.
+            Filled custom tokens use <code class="bg-muted px-1.5 py-0.5 rounded text-xs">--token-foreground</code> for the text when defined.
+        </p>
+        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_customTabs" TabListClass="mb-4" />
+    </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h3 class="font-semibold text-foreground mb-1">Styles</h3>
+        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_stylesTabs" TabListClass="mb-4" />
+    </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h3 class="font-semibold text-foreground mb-1">Sizes</h3>
+        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_sizesTabs" TabListClass="mb-4" />
     </div>
 
     <div class="p-6 rounded-3xl bg-card border border-border">
@@ -40,6 +60,80 @@
         new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_colorsCode</code></pre>, Icon: "code")
     ];
 
+    private static readonly WaxColor _chartColor = new("chart-4");
+    private static readonly WaxColor _tealColor = WaxColor.Custom("#3A8FA8");
+
+    private static List<WaxTabItem> _customTabs =
+    [
+        new("Preview", Content: @<div class="space-y-4">
+            <div class="flex items-center gap-2 flex-wrap">
+                <WaxBadge Color="_chartColor">Chart token</WaxBadge>
+                <WaxBadge Color="_tealColor">Custom hex</WaxBadge>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+                <WaxBadge Variant="WaxBadgeVariant.Soft" Color="_chartColor">Soft token</WaxBadge>
+                <WaxBadge Variant="WaxBadgeVariant.Outlined" Color="_tealColor">Outlined hex</WaxBadge>
+            </div>
+        </div>, Icon: "monitor-dot"),
+        new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_customCode</code></pre>, Icon: "code")
+    ];
+
+    private static List<WaxTabItem> _stylesTabs =
+    [
+        new("Preview", Content: @<div class="space-y-4">
+            <div>
+                <p class="mb-2 text-xs font-medium text-muted-foreground">Filled</p>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <WaxBadge Variant="WaxBadgeVariant.Filled" Color="WaxColor.Primary">Primary</WaxBadge>
+                    <WaxBadge Variant="WaxBadgeVariant.Filled" Color="WaxColor.Secondary">Secondary</WaxBadge>
+                    <WaxBadge Variant="WaxBadgeVariant.Filled" Color="WaxColor.Accent">Accent</WaxBadge>
+                    <WaxBadge Variant="WaxBadgeVariant.Filled" Color="WaxColor.Muted">Muted</WaxBadge>
+                </div>
+            </div>
+            <div>
+                <p class="mb-2 text-xs font-medium text-muted-foreground">Soft</p>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <WaxBadge Variant="WaxBadgeVariant.Soft" Color="WaxColor.Primary">Primary</WaxBadge>
+                    <WaxBadge Variant="WaxBadgeVariant.Soft" Color="WaxColor.Secondary">Secondary</WaxBadge>
+                    <WaxBadge Variant="WaxBadgeVariant.Soft" Color="WaxColor.Accent">Accent</WaxBadge>
+                    <WaxBadge Variant="WaxBadgeVariant.Soft" Color="WaxColor.Muted">Muted</WaxBadge>
+                </div>
+            </div>
+            <div>
+                <p class="mb-2 text-xs font-medium text-muted-foreground">Outlined</p>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <WaxBadge Variant="WaxBadgeVariant.Outlined" Color="WaxColor.Primary">Primary</WaxBadge>
+                    <WaxBadge Variant="WaxBadgeVariant.Outlined" Color="WaxColor.Secondary">Secondary</WaxBadge>
+                    <WaxBadge Variant="WaxBadgeVariant.Outlined" Color="WaxColor.Accent">Accent</WaxBadge>
+                    <WaxBadge Variant="WaxBadgeVariant.Outlined" Color="WaxColor.Muted">Muted</WaxBadge>
+                </div>
+            </div>
+        </div>, Icon: "monitor-dot"),
+        new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_stylesCode</code></pre>, Icon: "code")
+    ];
+
+    private static List<WaxTabItem> _sizesTabs =
+    [
+        new("Preview", Content: @<div class="space-y-4">
+            <div class="flex items-center gap-3 flex-wrap">
+                <WaxBadge Size="WaxBadgeSize.Small">Small</WaxBadge>
+                <WaxBadge Size="WaxBadgeSize.Medium">Medium</WaxBadge>
+                <WaxBadge Size="WaxBadgeSize.Large">Large</WaxBadge>
+            </div>
+            <div class="flex items-center gap-3 flex-wrap">
+                <WaxBadge Variant="WaxBadgeVariant.Soft" Size="WaxBadgeSize.Small">Small</WaxBadge>
+                <WaxBadge Variant="WaxBadgeVariant.Soft" Size="WaxBadgeSize.Medium">Medium</WaxBadge>
+                <WaxBadge Variant="WaxBadgeVariant.Soft" Size="WaxBadgeSize.Large">Large</WaxBadge>
+            </div>
+            <div class="flex items-center gap-3 flex-wrap">
+                <WaxBadge Variant="WaxBadgeVariant.Outlined" Size="WaxBadgeSize.Small">Small</WaxBadge>
+                <WaxBadge Variant="WaxBadgeVariant.Outlined" Size="WaxBadgeSize.Medium">Medium</WaxBadge>
+                <WaxBadge Variant="WaxBadgeVariant.Outlined" Size="WaxBadgeSize.Large">Large</WaxBadge>
+            </div>
+        </div>, Icon: "monitor-dot"),
+        new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_sizesCode</code></pre>, Icon: "code")
+    ];
+
     private static List<WaxTabItem> _usageTabs =
     [
         new("Preview", Content: @<div class="space-y-4">
@@ -49,11 +143,11 @@
             </div>
             <div class="flex items-center gap-3">
                 <span class="text-sm text-foreground">Status</span>
-                <WaxBadge Color="WaxColor.Secondary">Active</WaxBadge>
+                <WaxBadge Variant="WaxBadgeVariant.Soft" Color="WaxColor.Secondary">Active</WaxBadge>
             </div>
             <div class="flex items-center gap-3">
                 <span class="text-sm text-foreground">Version</span>
-                <WaxBadge Color="WaxColor.Muted">v1.0.0</WaxBadge>
+                <WaxBadge Variant="WaxBadgeVariant.Outlined" Color="WaxColor.Muted">v1.0.0</WaxBadge>
             </div>
             <div class="flex items-center gap-3">
                 <span class="text-sm text-foreground">New</span>
@@ -80,7 +174,59 @@
 
     private static string _colorsCode = "@using WaxComponents.Badge\n\n<WaxBadge Color=\"WaxColor.Primary\">Primary</WaxBadge>\n<WaxBadge Color=\"WaxColor.Secondary\">Secondary</WaxBadge>\n<WaxBadge Color=\"WaxColor.Accent\">Accent</WaxBadge>\n<WaxBadge Color=\"WaxColor.Muted\">Muted</WaxBadge>";
 
-    private static string _usageCode = "@using WaxComponents.Badge\n\n<div class=\"flex items-center gap-3\">\n    <span class=\"text-sm text-foreground\">Inbox</span>\n    <WaxBadge Color=\"WaxColor.Primary\">12</WaxBadge>\n</div>\n<div class=\"flex items-center gap-3\">\n    <span class=\"text-sm text-foreground\">Status</span>\n    <WaxBadge Color=\"WaxColor.Secondary\">Active</WaxBadge>\n</div>\n<div class=\"flex items-center gap-3\">\n    <span class=\"text-sm text-foreground\">Version</span>\n    <WaxBadge Color=\"WaxColor.Muted\">v1.0.0</WaxBadge>\n</div>\n<div class=\"flex items-center gap-3\">\n    <span class=\"text-sm text-foreground\">New</span>\n    <WaxBadge Color=\"WaxColor.Accent\">Feature</WaxBadge>\n</div>";
+    private static string _customCode = """
+        @using WaxComponents.Badge
+        @using WaxComponents.Theme
+
+        @code {
+            private static readonly WaxColor _chart = new("chart-4");
+            private static readonly WaxColor _teal = WaxColor.Custom("#3A8FA8");
+        }
+
+        <WaxBadge Color="_chart">Chart token</WaxBadge>
+        <WaxBadge Color="_teal">Custom hex</WaxBadge>
+        <WaxBadge Variant="WaxBadgeVariant.Soft" Color="_chart">Soft token</WaxBadge>
+        <WaxBadge Variant="WaxBadgeVariant.Outlined" Color="_teal">Outlined hex</WaxBadge>
+        """;
+
+    private static string _stylesCode = """
+        @using WaxComponents.Badge
+        @using WaxComponents.Theme
+
+        <WaxBadge Variant="WaxBadgeVariant.Filled" Color="WaxColor.Primary">Primary</WaxBadge>
+        <WaxBadge Variant="WaxBadgeVariant.Soft" Color="WaxColor.Primary">Primary</WaxBadge>
+        <WaxBadge Variant="WaxBadgeVariant.Outlined" Color="WaxColor.Primary">Primary</WaxBadge>
+        """;
+
+    private static string _sizesCode = """
+        @using WaxComponents.Badge
+
+        <WaxBadge Size="WaxBadgeSize.Small">Small</WaxBadge>
+        <WaxBadge Size="WaxBadgeSize.Medium">Medium</WaxBadge>
+        <WaxBadge Size="WaxBadgeSize.Large">Large</WaxBadge>
+        """;
+
+    private static string _usageCode = """
+        @using WaxComponents.Badge
+        @using WaxComponents.Theme
+
+        <div class="flex items-center gap-3">
+            <span class="text-sm text-foreground">Inbox</span>
+            <WaxBadge Color="WaxColor.Primary">12</WaxBadge>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="text-sm text-foreground">Status</span>
+            <WaxBadge Variant="WaxBadgeVariant.Soft" Color="WaxColor.Secondary">Active</WaxBadge>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="text-sm text-foreground">Version</span>
+            <WaxBadge Variant="WaxBadgeVariant.Outlined" Color="WaxColor.Muted">v1.0.0</WaxBadge>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="text-sm text-foreground">New</span>
+            <WaxBadge Color="WaxColor.Accent">Feature</WaxBadge>
+        </div>
+        """;
 
     private static string _spoilerCode = """
         @using WaxComponents.Badge

@@ -17,5 +17,5 @@
         "w-full bg-muted rounded-full h-2 overflow-hidden"
             .MergeClass(Class);
 
-    private string TrackStyle => $"width: {Value}%; background-color: var(--{Color});";
+    private string TrackStyle => $"width: {Value}%; background-color: {Color.CssValue};";
 }

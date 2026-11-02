@@ -47,6 +47,24 @@ Add the stylesheet and theme support to `App.razor`:
 private void OnClick() { }
 ```
 
+### Custom colors
+
+Components that accept a `WaxColor` (Badge, Progress Bar, Slider) also accept custom theme tokens and explicit CSS colors:
+
+```razor
+@code {
+    // Resolved as var(--brand); define --brand in your theme.
+    private static readonly WaxColor Brand = new("brand");
+    // Any CSS color value works.
+    private static readonly WaxColor BrandHex = WaxColor.Custom("#7B5EA7");
+}
+
+<WaxBadge Color="Brand">Brand</WaxBadge>
+<WaxBadge Color="BrandHex">Custom hex</WaxBadge>
+```
+
+Filled custom tokens use `--{token}-foreground` when defined; otherwise white is used for the text.
+
 ## Theming
 
 Inject `IThemeService` to change the theme at runtime:

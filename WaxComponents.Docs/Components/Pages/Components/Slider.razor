@@ -18,6 +18,15 @@
     </div>
 
     <div class="p-6 rounded-3xl bg-card border border-border">
+        <h3 class="font-semibold text-foreground mb-1">Custom Colors</h3>
+        <p class="mb-3 text-[13px] text-muted-foreground">
+            Use any theme token with <code class="bg-muted px-1.5 py-0.5 rounded text-xs">new WaxColor("chart-4")</code>
+            or an explicit CSS value with <code class="bg-muted px-1.5 py-0.5 rounded text-xs">WaxColor.Custom("#3A8FA8")</code>.
+        </p>
+        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_customTabs" TabListClass="mb-4" />
+    </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
         <h3 class="font-semibold text-foreground mb-1">Custom Range and Step</h3>
         <WaxTab Variant="WaxTabVariant.Primary" Tabs="_rangeTabs" TabListClass="mb-4" />
     </div>
@@ -44,14 +53,20 @@
 
 @code {
     private List<WaxTabItem> _colorsTabs = [];
+    private List<WaxTabItem> _customTabs = [];
     private List<WaxTabItem> _rangeTabs = [];
     private List<WaxTabItem> _noLabelTabs = [];
     private List<WaxTabItem> _linkedTabs = [];
     private List<WaxTabItem> _rangedTabs = [];
 
+    private static readonly WaxColor _chartColor = new("chart-4");
+    private static readonly WaxColor _tealColor = WaxColor.Custom("#3A8FA8");
+
     private double _volume1 = 40;
     private double _volume2 = 60;
     private double _volume3 = 25;
+    private double _customToken = 70;
+    private double _customHex = 35;
     private double _price = 250;
     private double _rating = 3.5;
     private double _year = 2024;
@@ -63,6 +78,21 @@
     private double _timeHigh = 17;
 
     private static string _colorsCode = "@using WaxComponents.Slider\n\n<div class=\"space-y-6\">\n    <WaxSlider @bind-Value=\"_volume1\" Label=\"Volume\" Color=\"WaxColor.Primary\" Min=\"0\" Max=\"100\" />\n    <WaxSlider @bind-Value=\"_volume2\" Label=\"Brightness\" Color=\"WaxColor.Secondary\" Min=\"0\" Max=\"100\" />\n    <WaxSlider @bind-Value=\"_volume3\" Label=\"Saturation\" Color=\"WaxColor.Accent\" Min=\"0\" Max=\"100\" />\n    <WaxSlider Value=\"60\" Label=\"Contrast\" Color=\"WaxColor.Muted\" Min=\"0\" Max=\"100\" />\n</div>\n\n@code {\n    private double _volume1 = 40;\n    private double _volume2 = 60;\n    private double _volume3 = 25;\n}";
+
+    private static string _customCode = """
+        @using WaxComponents.Slider
+        @using WaxComponents.Theme
+
+        @code {
+            private static readonly WaxColor _chart = new("chart-4");
+            private static readonly WaxColor _teal = WaxColor.Custom("#3A8FA8");
+            private double _tokenValue = 70;
+            private double _hexValue = 35;
+        }
+
+        <WaxSlider @bind-Value="_tokenValue" Label="Theme token" Color="_chart" Min="0" Max="100" />
+        <WaxSlider @bind-Value="_hexValue" Label="Explicit hex" Color="_teal" Min="0" Max="100" />
+        """;
 
     private static string _rangeCode = "@using WaxComponents.Slider\n\n<div class=\"space-y-6\">\n    <WaxSlider @bind-Value=\"_price\" Label=\"Price\" Color=\"WaxColor.Primary\" Min=\"0\" Max=\"500\" Step=\"10\" Format=\"0\" />\n    <WaxSlider @bind-Value=\"_rating\" Label=\"Rating\" Color=\"WaxColor.Accent\" Min=\"0\" Max=\"5\" Step=\"0.5\" Format=\"0.0\" />\n    <WaxSlider @bind-Value=\"_year\" Label=\"Year\" Color=\"WaxColor.Secondary\" Min=\"1900\" Max=\"2030\" Step=\"1\" Format=\"0\" />\n</div>\n\n@code {\n    private double _price = 250;\n    private double _rating = 3.5;\n    private double _year = 2024;\n}";
 
@@ -98,6 +128,15 @@
                 <WaxSlider Value="60" Label="Contrast" Color="WaxColor.Muted" Min="0" Max="100" />
             </div>, Icon: "monitor-dot"),
             new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_colorsCode</code></pre>, Icon: "code")
+        ];
+
+        _customTabs =
+        [
+            new("Preview", Content: @<div class="space-y-6">
+                <WaxSlider @bind-Value="_customToken" Label="Theme token (chart-4)" Color="_chartColor" Min="0" Max="100" />
+                <WaxSlider @bind-Value="_customHex" Label="Explicit hex" Color="_tealColor" Min="0" Max="100" />
+            </div>, Icon: "monitor-dot"),
+            new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_customCode</code></pre>, Icon: "code")
         ];
 
         _rangeTabs =

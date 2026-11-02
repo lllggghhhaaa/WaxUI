@@ -153,7 +153,7 @@
         : IsRange ? RangeTrackStyle : DefaultTrackStyle;
 
     private string DefaultTrackStyle =>
-        $"width: {Inv(PercentageOf(Value), "0.##")}%; background-color: var(--{Color});{DisabledStyle}";
+        $"width: {Inv(PercentageOf(Value), "0.##")}%; background-color: {Color.CssValue};{DisabledStyle}";
 
     private string RangeTrackStyle
     {
@@ -162,12 +162,12 @@
             var low = PercentageOf(Low);
             var high = PercentageOf(High);
             return $"margin-left: {Inv(low, "0.##")}%; width: {Inv(Math.Max(0, high - low), "0.##")}%; "
-                 + $"background-color: var(--{Color});{DisabledStyle}";
+                 + $"background-color: {Color.CssValue};{DisabledStyle}";
         }
     }
 
     private string ThumbStyleAt(double value) =>
-        $"left: calc({Inv(PercentageOf(value), "0.##")}% - 10px); background-color: var(--{Color});{DisabledStyle}"
+        $"left: calc({Inv(PercentageOf(value), "0.##")}% - 10px); background-color: {Color.CssValue};{DisabledStyle}"
         + (ThumbStyle is { Length: > 0 } ? $" {ThumbStyle}" : string.Empty);
 
     private double PercentageOf(double value)
