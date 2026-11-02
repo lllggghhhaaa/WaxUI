@@ -1,0 +1,167 @@
+@using LucideBlazor
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.JSInterop
+@using WaxComponents.Utils
+
+@inherits WaxComponent
+@implements IAsyncDisposable
+@inject IJSRuntime Js
+
+@* Screen scope: a fixed page-wide surface. Region scope: the wrapper is laid out in place
+   and only covers ChildContent, so a panel, card or section becomes the drop target. *@
+<div @ref="_rootRef" class="@RootClass" style="@Style" @attributes="AdditionalAttributes">
+    @if (Scope == WaxDropScope.Region)
+    {
+        @ChildContent
+    }
+
+    <div class="@PanelWrapperClass" aria-hidden="@(!IsVisible)">
+        <div class="@IconBubbleClass">
+            <LucideIcon Name="cloud-upload" Size="@IconSize" />
+        </div>
+        <p class="mt-4 text-lg font-semibold text-foreground">@Title</p>
+        <p class="mt-1 text-sm text-muted-foreground">@DescriptionText</p>
+    </div>
+
+    <InputFile class="sr-only" OnChange="HandleFileChangeAsync" />
+</div>
+
+@code {
+    private ElementReference _rootRef;
+    private WaxDropJs? _jsInterop;
+    private DotNetObjectReference<WaxDropOverlay>? _selfRef;
+    private WaxDropScope? _attachedScope;
+    private bool _dragging;
+
+    /// <summary>Catches drops on the whole window, or only over this overlay's own region.</summary>
+    [Parameter] public WaxDropScope Scope { get; set; } = WaxDropScope.Screen;
+
+    /// <summary>Forces the overlay open outside a file drag, e.g. from a button.</summary>
+    [Parameter] public bool Visible { get; set; }
+
+    /// <summary>Shows the overlay automatically while files are dragged over its scope.</summary>
+    [Parameter] public bool AutoShow { get; set; } = true;
+
+    /// <summary>Upper bound on files handed to <see cref="OnFilesSelected"/> per drop.</summary>
+    [Parameter] public int MaxFiles { get; set; } = 10;
+
+    [Parameter] public string Title { get; set; } = "Drop files to upload";
+
+    /// <summary>Hint under the title; the default depends on the scope.</summary>
+    [Parameter] public string? Description { get; set; }
+
+    /// <summary>Region mode: the content the overlay covers.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Fires with the dropped files; read them with <c>OpenReadStream</c>.</summary>
+    [Parameter] public EventCallback<IReadOnlyList<IBrowserFile>> OnFilesSelected { get; set; }
+
+    private bool IsVisible => Visible || (AutoShow && _dragging);
+
+    private string DescriptionText => Description
+        ?? (Scope == WaxDropScope.Region ? "Release to add it here." : "Release anywhere on the page.");
+
+    private string RootClass => Scope == WaxDropScope.Region
+        ? "relative".MergeClass(Class)
+        : (IsVisible
+            ? "fixed inset-0 z-[90] flex items-center justify-center bg-background/80 p-6 backdrop-blur-sm pointer-events-none"
+            : "hidden").MergeClass(Class);
+
+    private string PanelWrapperClass
+    {
+        get
+        {
+            if (Scope == WaxDropScope.Region)
+            {
+                return "pointer-events-none absolute inset-0 z-[90] flex flex-col items-center justify-center rounded-[inherit] border-2 border-dashed border-primary bg-card/90 p-4 text-center backdrop-blur-sm"
+                    .MergeClass(IsVisible ? string.Empty : "hidden");
+            }
+
+            return "pointer-events-none flex w-full max-w-md flex-col items-center rounded-3xl border-2 border-dashed border-primary bg-card/95 px-8 py-12 text-center shadow-xl";
+        }
+    }
+
+    private string IconBubbleClass => Scope == WaxDropScope.Region
+        ? "flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 text-primary"
+        : "flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15 text-primary";
+
+    private int IconSize => Scope == WaxDropScope.Region ? 22 : 26;
+
+    private DotNetObjectReference<WaxDropOverlay> SelfRef => _selfRef ??= DotNetObjectReference.Create(this);
+
+    /// <summary>Drag state of the window behind the screen-scoped overlay.</summary>
+    [JSInvokable]
+    public Task OnWindowDragStateChanged(bool dragging) => SetDraggingAsync(dragging);
+
+    /// <summary>Drag state of the region-scoped overlay's own wrapper.</summary>
+    [JSInvokable]
+    public Task OnDragStateChanged(bool dragging) => SetDraggingAsync(dragging);
+
+    private Task SetDraggingAsync(bool dragging)
+    {
+        if (_dragging == dragging)
+        {
+            return Task.CompletedTask;
+        }
+
+        _dragging = dragging;
+        return InvokeAsync(StateHasChanged);
+    }
+
+    private async Task HandleFileChangeAsync(InputFileChangeEventArgs e)
+    {
+        _dragging = false;
+
+        var files = e.GetMultipleFiles(Math.Max(1, MaxFiles));
+        await OnFilesSelected.InvokeAsync(files);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        _jsInterop ??= new WaxDropJs(Js);
+
+        // Reattach when the scope changes or AutoShow is toggled.
+        var scope = AutoShow ? Scope : (WaxDropScope?)null;
+        if (_attachedScope == scope) return;
+
+        await DetachAsync(_attachedScope);
+        _attachedScope = scope;
+        _dragging = false;
+
+        switch (scope)
+        {
+            case WaxDropScope.Screen:
+                await _jsInterop.InvokeAsync<object?>("attachWindowDrop", _rootRef, SelfRef, Math.Max(1, MaxFiles));
+                break;
+            case WaxDropScope.Region:
+                await _jsInterop.InvokeAsync<object?>("attachDropTarget", _rootRef, SelfRef, Math.Max(1, MaxFiles));
+                break;
+        }
+    }
+
+    private async Task DetachAsync(WaxDropScope? scope)
+    {
+        if (scope is null || _jsInterop is null) return;
+
+        switch (scope)
+        {
+            case WaxDropScope.Screen:
+                await _jsInterop.InvokeAsync<object?>("detachWindowDrop");
+                break;
+            case WaxDropScope.Region:
+                await _jsInterop.InvokeAsync<object?>("detachDropTarget", _rootRef);
+                break;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await DetachAsync(_attachedScope);
+        _attachedScope = null;
+
+        _selfRef?.Dispose();
+
+        if (_jsInterop is not null)
+            await _jsInterop.DisposeAsync();
+    }
+}

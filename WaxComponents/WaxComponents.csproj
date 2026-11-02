@@ -13,15 +13,12 @@
         <PackageTags>blazor</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageVersion>0.9.9</PackageVersion>
+        <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\'))</RepoRoot>
     </PropertyGroup>
 
     <ItemGroup>
         <None Include="../README.md" Pack="true" PackagePath="" />
     </ItemGroup>
-    
-    <PropertyGroup>
-        <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../'))</RepoRoot>
-    </PropertyGroup>
 
     <ItemGroup>
         <Content Remove="wwwroot\app.css" />
@@ -30,6 +27,7 @@
         <Content Remove="wwwroot\js\colorPicker.js" />
         <Content Remove="wwwroot\js\dialog.js" />
         <Content Remove="wwwroot\js\popover.js" />
+        <Content Remove="wwwroot\js\dropzone.js" />
     </ItemGroup>
 
     <!-- Shared npm pipeline bootstrap (Tailwind CSS + TypeScript/esbuild). -->
@@ -38,9 +36,7 @@
         <Exec Command="npm ci --no-audit --no-fund --loglevel=error" WorkingDirectory="$(RepoRoot)" />
     </Target>
 
-    <Target Name="BuildTailwind" BeforeTargets="BeforeBuild" DependsOnTargets="NpmInstall"
-            Inputs="app.css;Theme\**\*.css;**\*.razor;**\*.cs"
-            Outputs="wwwroot\app.css;wwwroot\tokens.css">
+    <Target Name="BuildTailwind" BeforeTargets="BeforeBuild" DependsOnTargets="NpmInstall">
         <Exec Command="npm run build:css" Condition="'$(Configuration)' != 'Release'" />
         <Exec Command="npm run build:css:min" Condition="'$(Configuration)' == 'Release'" />
         <Copy SourceFiles="Theme\tokens.css" DestinationFiles="wwwroot\tokens.css" SkipUnchangedFiles="true" />
@@ -53,11 +49,10 @@
     <!-- TypeScript pipeline. Sources in Scripts/, compiled by esbuild: theme.js (ES module
          used by ThemeService), colorPicker.js (ES module used by WaxColorPickerJs),
          dialog.js (ES module used by WaxDialogJs), popover.js (ES module used by
-         WaxPopoverJs) and ThemePreloaderScript.generated.cs (inline <head> script const
-         rendered by ThemePreloader.razor, kept inline to avoid a theme flash). -->
-    <Target Name="BuildScripts" BeforeTargets="BeforeBuild" DependsOnTargets="NpmInstall"
-            Inputs="Scripts\**\*.ts;Scripts\*.mjs;tsconfig.json"
-            Outputs="wwwroot\js\theme.js;wwwroot\js\colorPicker.js;wwwroot\js\dialog.js;wwwroot\js\popover.js;Services\Theme\ThemePreloaderScript.generated.cs">
+         WaxPopoverJs), dropzone.js (ES module used by WaxDropJs) and
+         ThemePreloaderScript.generated.cs (inline <head> script const rendered by
+         ThemePreloader.razor, kept inline to avoid a theme flash). -->
+    <Target Name="BuildScripts" BeforeTargets="BeforeBuild" DependsOnTargets="NpmInstall">
         <Exec Command="npm run build:js" Condition="'$(Configuration)' != 'Release'" />
         <Exec Command="npm run build:js:min" Condition="'$(Configuration)' == 'Release'" />
         <ItemGroup>
@@ -65,6 +60,7 @@
             <Content Include="wwwroot\js\colorPicker.js" CopyToPublishDirectory="PreserveNewest" />
             <Content Include="wwwroot\js\dialog.js" CopyToPublishDirectory="PreserveNewest" />
             <Content Include="wwwroot\js\popover.js" CopyToPublishDirectory="PreserveNewest" />
+            <Content Include="wwwroot\js\dropzone.js" CopyToPublishDirectory="PreserveNewest" />
             <!-- Remove+Include so an evaluation-time glob of the generated file is not compiled twice. -->
             <Compile Remove="Services\Theme\ThemePreloaderScript.generated.cs" />
             <Compile Include="Services\Theme\ThemePreloaderScript.generated.cs" />

@@ -1,0 +1,153 @@
+@page "/component/breadcrumb"
+@rendermode InteractiveServer
+@using WaxComponents.Breadcrumb
+@using WaxComponents.Tabs
+@inject NavigationManager Nav
+
+<PageTitle>Breadcrumb - Wax Components</PageTitle>
+
+<div class="mb-8">
+    <h1 class="text-3xl font-display font-bold text-foreground mb-2">Breadcrumb</h1>
+    <p class="text-muted-foreground">A compact trail of links showing where the current page sits in the hierarchy.</p>
+</div>
+
+<div class="space-y-6">
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h3 class="font-semibold text-foreground mb-1">Basic</h3>
+        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_basicTabs" TabListClass="mb-4" />
+    </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h3 class="font-semibold text-foreground mb-1">Navigation</h3>
+        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_navigationTabs" TabListClass="mb-4" />
+    </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h3 class="font-semibold text-foreground mb-1">With icons</h3>
+        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_iconTabs" TabListClass="mb-4" />
+    </div>
+</div>
+
+@code {
+    private static List<WaxTabItem> _basicTabs =
+    [
+        new("Preview", Content: @<WaxBreadcrumb Items="_basicItems" />, Icon: "monitor-dot"),
+        new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_basicCode</code></pre>, Icon: "code")
+    ];
+
+    private List<WaxTabItem> _navigationTabs = [];
+
+    private static List<WaxTabItem> _iconTabs =
+    [
+        new("Preview", Content: @<WaxBreadcrumb Items="_iconItems" />, Icon: "monitor-dot"),
+        new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_iconCode</code></pre>, Icon: "code")
+    ];
+
+    private static readonly List<WaxBreadcrumbItem> _basicItems =
+    [
+        new("Settings", "/getting-started"),
+        new("Workspace", "/component/breadcrumb"),
+        new("Members")
+    ];
+
+    private static readonly List<WaxBreadcrumbItem> _iconItems =
+    [
+        new("Home", "/", "house"),
+        new("Components", "/component/breadcrumb", "box"),
+        new("Breadcrumb")
+    ];
+
+    protected override void OnInitialized()
+    {
+        _navigationTabs =
+        [
+            new("Preview", Content: @<div class="space-y-4">
+                <WaxBreadcrumb Items="_linkItems" />
+                <WaxBreadcrumb Items="_clickItems" OnItemClick="GoTo" />
+                <p class="text-xs text-muted-foreground">Last click: @(_lastClicked ?? "none")</p>
+            </div>, Icon: "monitor-dot"),
+            new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_navigationCode</code></pre>, Icon: "code")
+        ];
+    }
+
+    private static readonly List<WaxBreadcrumbItem> _linkItems =
+    [
+        new("Docs", "/", "house"),
+        new("Components", "/component/button"),
+        new("Breadcrumb")
+    ];
+
+    private static readonly List<WaxBreadcrumbItem> _clickItems =
+    [
+        new("Settings"),
+        new("Workspace"),
+        new("Members")
+    ];
+
+    private string? _lastClicked;
+
+    private void GoTo(WaxBreadcrumbItem item)
+    {
+        _lastClicked = item.Label;
+        Nav.NavigateTo("/component/breadcrumb");
+    }
+
+    private static string _basicCode = """
+        @using WaxComponents.Breadcrumb
+
+        <WaxBreadcrumb Items="_items" />
+
+        @code {
+            private static readonly List<WaxBreadcrumbItem> _items =
+            [
+                new("Settings", "/getting-started"),
+                new("Workspace", "/settings/workspace"),
+                new("Members")
+            ];
+        }
+        """;
+
+    private static string _navigationCode = """
+        @using WaxComponents.Breadcrumb
+        @inject NavigationManager Nav
+
+        <WaxBreadcrumb Items="_linkItems" />
+
+        <WaxBreadcrumb Items="_clickItems" OnItemClick="GoTo" />
+
+        @code {
+            // Crumbs with an Href render as anchors, so enhanced navigation applies.
+            private static readonly List<WaxBreadcrumbItem> _linkItems =
+            [
+                new("Docs", "/", "house"),
+                new("Components", "/component/button"),
+                new("Breadcrumb")
+            ];
+
+            // Crumbs without an Href call back so you can navigate yourself.
+            private static readonly List<WaxBreadcrumbItem> _clickItems =
+            [
+                new("Settings"),
+                new("Workspace"),
+                new("Members")
+            ];
+
+            private void GoTo(WaxBreadcrumbItem item) => Nav.NavigateTo("/settings/" + item.Label.ToLowerInvariant());
+        }
+        """;
+
+    private static string _iconCode = """
+        @using WaxComponents.Breadcrumb
+
+        <WaxBreadcrumb Items="_items" />
+
+        @code {
+            private static readonly List<WaxBreadcrumbItem> _items =
+            [
+                new("Home", "/", "house"),
+                new("Components", "/component/breadcrumb", "box"),
+                new("Breadcrumb")
+            ];
+        }
+        """;
+}

@@ -1,0 +1,222 @@
+@page "/component/dropzone"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Forms
+@using WaxComponents.Button
+@using WaxComponents.Dropzone
+@using WaxComponents.Tabs
+
+<PageTitle>Dropzone - Wax Components</PageTitle>
+
+<div class="mb-8">
+    <h1 class="text-3xl font-display font-bold text-foreground mb-2">Dropzone</h1>
+    <p class="text-muted-foreground">Drag-and-drop file picking with a browse fallback, type and size validation, and a drop overlay for the whole screen or a single region.</p>
+</div>
+
+<div class="space-y-6">
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h3 class="font-semibold text-foreground mb-1">Basic</h3>
+        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_basicTabs" TabListClass="mb-4" />
+    </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h3 class="font-semibold text-foreground mb-1">Validation</h3>
+        <p class="mb-3 text-[13px] text-muted-foreground">Drop a PDF or a file over 1 MB to see the error state; accepted files must be PNG.</p>
+        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_validationTabs" TabListClass="mb-4" />
+    </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h3 class="font-semibold text-foreground mb-1">Disabled</h3>
+        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_disabledTabs" TabListClass="mb-4" />
+    </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h3 class="font-semibold text-foreground mb-1">Drop overlay — screen</h3>
+        <p class="mb-3 text-[13px] text-muted-foreground">
+            A fixed overlay over the whole window. With <code class="bg-muted px-1.5 py-0.5 rounded text-xs">AutoShow</code> on (the default) it
+            appears as soon as files are dragged onto the page; <code class="bg-muted px-1.5 py-0.5 rounded text-xs">Visible</code> opens it from code.
+            Dropped files arrive as <code class="bg-muted px-1.5 py-0.5 rounded text-xs">IBrowserFile</code> instances.
+        </p>
+        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_screenTabs" TabListClass="mb-4" />
+    </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h3 class="font-semibold text-foreground mb-1">Drop overlay — region</h3>
+        <p class="mb-3 text-[13px] text-muted-foreground">
+            With <code class="bg-muted px-1.5 py-0.5 rounded text-xs">Scope="WaxDropScope.Region"</code> the overlay wraps its own content and only
+            reacts to drops over that area — drag an image onto the card below.
+        </p>
+        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_regionTabs" TabListClass="mb-4" />
+    </div>
+</div>
+
+@code {
+    private string? _basicStatus;
+    private string? _validationStatus;
+    private bool _screenVisible;
+    private IReadOnlyList<string> _screenFiles = [];
+    private IReadOnlyList<string> _regionFiles = [];
+    private List<WaxTabItem> _basicTabs = [];
+    private List<WaxTabItem> _validationTabs = [];
+    private List<WaxTabItem> _disabledTabs = [];
+    private List<WaxTabItem> _screenTabs = [];
+    private List<WaxTabItem> _regionTabs = [];
+
+    protected override void OnInitialized()
+    {
+        _basicTabs =
+        [
+            new("Preview", Content: @<div class="max-w-md">
+                <WaxDropzone OnFileSelected="OnBasicFile" />
+                <p class="mt-3 text-xs text-muted-foreground">@(_basicStatus ?? "No file selected yet.")</p>
+            </div>, Icon: "monitor-dot"),
+            new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_basicCode</code></pre>, Icon: "code")
+        ];
+
+        _validationTabs =
+        [
+            new("Preview", Content: @<div class="max-w-md">
+                <WaxDropzone Label="Avatar"
+                             Accept="image/png"
+                             MaxSize="1048576"
+                             OnFileSelected="OnValidationFile" />
+                <p class="mt-3 text-xs text-muted-foreground">@(_validationStatus ?? "Waiting for a PNG under 1 MB.")</p>
+            </div>, Icon: "monitor-dot"),
+            new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_validationCode</code></pre>, Icon: "code")
+        ];
+
+        _disabledTabs =
+        [
+            new("Preview", Content: @<div class="max-w-md">
+                <WaxDropzone Label="Locked" Disabled="true" />
+            </div>, Icon: "monitor-dot"),
+            new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_disabledCode</code></pre>, Icon: "code")
+        ];
+
+        _screenTabs =
+        [
+            new("Preview", Content: @<div class="space-y-3">
+                <WaxButton Variant="WaxButtonVariant.Outlined" OnClick="ToggleScreen">@(_screenVisible ? "Hide overlay" : "Show overlay")</WaxButton>
+                @if (_screenFiles.Count > 0)
+                {
+                    <ul class="m-0 list-none space-y-1 p-0 text-xs text-muted-foreground">
+                        @foreach (var name in _screenFiles)
+                        {
+                            <li class="font-mono">Dropped: @name</li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p class="text-xs text-muted-foreground">Dropped file names will be listed here.</p>
+                }
+                <WaxDropOverlay AutoShow="false" Visible="_screenVisible" OnFilesSelected="OnScreenFiles" />
+            </div>, Icon: "monitor-dot"),
+            new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_screenCode</code></pre>, Icon: "code")
+        ];
+
+        _regionTabs =
+        [
+            new("Preview", Content: @<div class="max-w-md">
+                <WaxDropOverlay Scope="WaxDropScope.Region" Class="rounded-3xl" OnFilesSelected="OnRegionFiles">
+                    <div class="flex h-48 flex-col items-center justify-center gap-1 rounded-3xl border border-border bg-background p-6 text-center">
+                        <p class="text-sm font-semibold">Product cover</p>
+                        <p class="text-xs text-muted-foreground">Drag an image onto this card.</p>
+                        @if (_regionFiles.Count > 0)
+                        {
+                            <ul class="m-0 mt-2 list-none space-y-1 p-0 text-xs text-muted-foreground">
+                                @foreach (var name in _regionFiles)
+                                {
+                                    <li class="font-mono">Dropped: @name</li>
+                                }
+                            </ul>
+                        }
+                    </div>
+                </WaxDropOverlay>
+            </div>, Icon: "monitor-dot"),
+            new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_regionCode</code></pre>, Icon: "code")
+        ];
+    }
+
+    private void OnBasicFile(IBrowserFile file) =>
+        _basicStatus = $"{file.Name} · {file.Size / 1024d / 1024d:0.0} MB";
+
+    private void OnValidationFile(IBrowserFile file) =>
+        _validationStatus = $"{file.Name} · {file.Size / 1024d:0.#} KB";
+
+    private void ToggleScreen() => _screenVisible = !_screenVisible;
+
+    private void OnScreenFiles(IReadOnlyList<IBrowserFile> files)
+    {
+        _screenFiles = files.Select(file => file.Name).ToList();
+        _screenVisible = false;
+    }
+
+    private void OnRegionFiles(IReadOnlyList<IBrowserFile> files) =>
+        _regionFiles = files.Select(file => file.Name).ToList();
+
+    private static string _basicCode = """
+        @using WaxComponents.Dropzone
+
+        <WaxDropzone OnFileSelected="OnFileSelected" />
+
+        @code {
+            private void OnFileSelected(IBrowserFile file)
+            {
+                // file.Name, file.Size, file.ContentType; stream it with OpenReadStream
+            }
+        }
+        """;
+
+    private static string _validationCode = """
+        @using WaxComponents.Dropzone
+
+        <WaxDropzone Label="Avatar"
+                     Accept="image/png"
+                     MaxSize="1048576"
+                     OnFileSelected="OnFileSelected" />
+        """;
+
+    private static string _disabledCode = """
+        @using WaxComponents.Dropzone
+
+        <WaxDropzone Label="Locked" Disabled="true" />
+        """;
+
+    private static string _screenCode = """
+        @using WaxComponents.Dropzone
+
+        @* Scope defaults to Screen: a fixed overlay over the whole window.
+           AutoShow (default true) reveals it while files are dragged anywhere. *@
+        <WaxDropOverlay OnFilesSelected="OnFilesSelected" />
+
+        @* Or drive it yourself. *@
+        <WaxDropOverlay AutoShow="false" Visible="_open" OnFilesSelected="OnFilesSelected" />
+
+        @code {
+            private bool _open;
+
+            private void OnFilesSelected(IReadOnlyList<IBrowserFile> files)
+            {
+                // files[0].Name, files[0].Size, files[0].OpenReadStream(...)
+            }
+        }
+        """;
+
+    private static string _regionCode = """
+        @using WaxComponents.Dropzone
+
+        @* Region scope: the overlay covers its own ChildContent and catches drops only there. *@
+        <WaxDropOverlay Scope="WaxDropScope.Region"
+                        Class="rounded-3xl"
+                        OnFilesSelected="OnFilesSelected">
+            <div class="rounded-3xl border border-border p-6">
+                <p class="text-sm font-semibold">Product cover</p>
+                <p class="text-xs text-muted-foreground">Drag an image onto this card.</p>
+            </div>
+        </WaxDropOverlay>
+
+        @code {
+            private void OnFilesSelected(IReadOnlyList<IBrowserFile> files) { }
+        }
+        """;
+}

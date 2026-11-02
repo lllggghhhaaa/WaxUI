@@ -117,3 +117,41 @@ body {
         display: none;
     }
 }
+/* Ranged WaxSlider: both native inputs span the whole track, so only their (invisible)
+   thumbs may capture the pointer — otherwise the top input would swallow the other's drags. */
+.wax-range-input {
+    pointer-events: none;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+}
+
+.wax-range-input::-webkit-slider-runnable-track {
+    background: transparent;
+    border: 0;
+}
+
+.wax-range-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 0;
+    border-radius: 9999px;
+    background: transparent;
+    pointer-events: auto;
+}
+
+.wax-range-input::-moz-range-track {
+    background: transparent;
+    border: 0;
+}
+
+.wax-range-input::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border: 0;
+    border-radius: 9999px;
+    background: transparent;
+    pointer-events: auto;
+}
