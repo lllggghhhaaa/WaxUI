@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="WaxUI.Docs/WaxUI.Docs.csproj" />
+  <Project Path="WaxUI/WaxUI.csproj" />
+</Solution>

@@ -1,0 +1,245 @@
+@using System.Globalization
+@using WaxUI.Theme
+@using WaxUI.Utils
+
+@inherits WaxComponent
+
+<div class="@CssClass" style="@Style" @attributes="AdditionalAttributes">
+    @if (!string.IsNullOrEmpty(Label) || ShowValue)
+    {
+        <div class="flex justify-between mb-2">
+            @if (!string.IsNullOrEmpty(Label))
+            {
+                <label for="@_inputId" class="text-sm font-medium text-foreground">@Label</label>
+            }
+            @if (ShowValue)
+            {
+                <span class="text-sm font-mono text-muted-foreground">@ValueText</span>
+            }
+        </div>
+    }
+
+    <div class="relative h-5 flex items-center">
+        <div class="absolute w-full h-2 rounded-full bg-muted overflow-hidden">
+            <div class="h-full rounded-full transition-all duration-100"
+                 style="@ResolvedTrackStyle">
+            </div>
+        </div>
+
+        @if (IsRange)
+        {
+            @* Two stacked native inputs. The .wax-range-input rule makes only their (invisible)
+               thumbs hit-testable, so each thumb stays draggable despite the shared track. *@
+            <input id="@_inputId"
+                   type="range"
+                   min="@Inv(Min)"
+                   max="@Inv(Max)"
+                   step="@Inv(Step)"
+                   value="@Inv(Low)"
+                   disabled="@Disabled"
+                   aria-label="@MinimumLabel"
+                   @oninput="OnStartInput"
+                   @onchange="OnStartChange"
+                   class="wax-range-input absolute w-full h-5 cursor-pointer disabled:cursor-not-allowed" />
+
+            <input type="range"
+                   min="@Inv(Min)"
+                   max="@Inv(Max)"
+                   step="@Inv(Step)"
+                   value="@Inv(High)"
+                   disabled="@Disabled"
+                   aria-label="@MaximumLabel"
+                   @oninput="OnEndInput"
+                   @onchange="OnEndChange"
+                   class="wax-range-input absolute w-full h-5 cursor-pointer disabled:cursor-not-allowed" />
+
+            <div class="absolute w-5 h-5 rounded-full shadow-md border-2 border-background transition-all duration-100 pointer-events-none"
+                 style="@ThumbStyleAt(Low)"
+                 aria-hidden="true">
+            </div>
+            <div class="absolute w-5 h-5 rounded-full shadow-md border-2 border-background transition-all duration-100 pointer-events-none"
+                 style="@ThumbStyleAt(High)"
+                 aria-hidden="true">
+            </div>
+        }
+        else
+        {
+            <input id="@_inputId"
+                   type="range"
+                   min="@Inv(Min)"
+                   max="@Inv(Max)"
+                   step="@Inv(Step)"
+                   value="@Inv(Value)"
+                   disabled="@Disabled"
+                   @oninput="OnInput"
+                   @onchange="OnNativeChange"
+                   class="absolute w-full opacity-0 h-5 cursor-pointer disabled:cursor-not-allowed" />
+
+            <div class="absolute w-5 h-5 rounded-full shadow-md border-2 border-background transition-all duration-100 pointer-events-none"
+                 style="@ThumbStyleAt(Value)"
+                 aria-hidden="true">
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private readonly string _inputId = $"slider-{Guid.NewGuid():N}";
+
+    [Parameter] public double Value { get; set; }
+
+    [Parameter] public EventCallback<double> ValueChanged { get; set; }
+
+    /// <summary>
+    /// Upper bound of a range. Setting it turns the slider into a two-thumb range where
+    /// <see cref="Value"/> is the lower bound; pair it with <see cref="ValueEndChanged"/>.
+    /// </summary>
+    [Parameter] public double? ValueEnd { get; set; }
+
+    [Parameter] public EventCallback<double> ValueEndChanged { get; set; }
+
+    [Parameter] public double Min { get; set; } = 0;
+
+    [Parameter] public double Max { get; set; } = 100;
+
+    [Parameter] public double Step { get; set; } = 1;
+
+    [Parameter] public WaxColor Color { get; set; } = WaxColor.Primary;
+
+    [Parameter] public string? Label { get; set; }
+
+    [Parameter] public bool ShowValue { get; set; } = true;
+
+    [Parameter] public string Format { get; set; } = "0.##";
+
+    [Parameter] public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Replaces the fill track's inline style entirely. Use for full-track gradients (e.g. the
+    /// color picker's hue/alpha rails) where the fill-percentage background does not apply.
+    /// </summary>
+    [Parameter] public string? TrackStyle { get; set; }
+
+    /// <summary>
+    /// Appended to the thumb's inline style; later declarations win, so it can override the
+    /// thumb color without touching the position.
+    /// </summary>
+    [Parameter] public string? ThumbStyle { get; set; }
+
+    /// <summary>Fires when the value settles (pointer release or keyboard tick, native `change`).</summary>
+    [Parameter] public EventCallback<double> OnCommitted { get; set; }
+
+    private bool IsRange => ValueEnd.HasValue;
+
+    private double Low => ValueEnd is { } end ? Math.Min(Value, end) : Value;
+
+    private double High => ValueEnd is { } end ? Math.Max(Value, end) : Value;
+
+    private string MinimumLabel => string.IsNullOrEmpty(Label) ? "Minimum" : $"{Label} minimum";
+
+    private string MaximumLabel => string.IsNullOrEmpty(Label) ? "Maximum" : $"{Label} maximum";
+
+    // Display text is user-facing, so it follows the current culture.
+    private string ValueText => IsRange
+        ? $"{Low.ToString(Format, CultureInfo.CurrentCulture)} – {High.ToString(Format, CultureInfo.CurrentCulture)}"
+        : Value.ToString(Format, CultureInfo.CurrentCulture);
+
+    private string CssClass => Cn.Of("w-full", Class).Value;
+
+    private string DisabledStyle => Disabled ? " opacity: 0.5;" : string.Empty;
+
+    private string ResolvedTrackStyle => TrackStyle is { Length: > 0 }
+        ? TrackStyle
+        : IsRange ? RangeTrackStyle : DefaultTrackStyle;
+
+    private string DefaultTrackStyle =>
+        $"width: {Inv(PercentageOf(Value), "0.##")}%; background-color: {Color.CssValue};{DisabledStyle}";
+
+    private string RangeTrackStyle
+    {
+        get
+        {
+            var low = PercentageOf(Low);
+            var high = PercentageOf(High);
+            return $"margin-left: {Inv(low, "0.##")}%; width: {Inv(Math.Max(0, high - low), "0.##")}%; "
+                 + $"background-color: {Color.CssValue};{DisabledStyle}";
+        }
+    }
+
+    private string ThumbStyleAt(double value) =>
+        $"left: calc({Inv(PercentageOf(value), "0.##")}% - 10px); background-color: {Color.CssValue};{DisabledStyle}"
+        + (ThumbStyle is { Length: > 0 } ? $" {ThumbStyle}" : string.Empty);
+
+    private double PercentageOf(double value)
+    {
+        if (Max <= Min)
+        {
+            return 0;
+        }
+
+        return Math.Clamp((value - Min) / (Max - Min) * 100, 0, 100);
+    }
+
+    /// <summary>Formats for HTML attributes and CSS, which always use '.' as the decimal separator.</summary>
+    private static string Inv(double value, string? format = null) =>
+        value.ToString(format, CultureInfo.InvariantCulture);
+
+    /// <summary>Native range inputs report their value in invariant format, regardless of UI culture.</summary>
+    private static bool TryParse(ChangeEventArgs e, out double value) =>
+        double.TryParse(e.Value?.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out value);
+
+    private async Task OnInput(ChangeEventArgs e)
+    {
+        if (!TryParse(e, out var newValue))
+        {
+            return;
+        }
+
+        Value = newValue;
+        await ValueChanged.InvokeAsync(newValue);
+    }
+
+    private Task OnNativeChange(ChangeEventArgs e) =>
+        TryParse(e, out var newValue)
+            ? OnCommitted.InvokeAsync(Math.Clamp(newValue, Min, Max))
+            : Task.CompletedTask;
+
+    private Task OnStartInput(ChangeEventArgs e) =>
+        IsRange && TryParse(e, out var newValue)
+            ? ApplyRangeAsync(newValue, High)
+            : Task.CompletedTask;
+
+    private Task OnEndInput(ChangeEventArgs e) =>
+        IsRange && TryParse(e, out var newValue)
+            ? ApplyRangeAsync(Low, newValue)
+            : Task.CompletedTask;
+
+    private Task OnStartChange(ChangeEventArgs e) =>
+        TryParse(e, out var newValue)
+            ? OnCommitted.InvokeAsync(Math.Clamp(newValue, Min, High))
+            : Task.CompletedTask;
+
+    private Task OnEndChange(ChangeEventArgs e) =>
+        TryParse(e, out var newValue)
+            ? OnCommitted.InvokeAsync(Math.Clamp(newValue, Low, Max))
+            : Task.CompletedTask;
+
+    /// <summary>Writes a sorted pair back so the thumbs can never cross.</summary>
+    private async Task ApplyRangeAsync(double low, double high)
+    {
+        low = Math.Clamp(Math.Min(low, high), Min, Max);
+        high = Math.Clamp(Math.Max(low, high), Min, Max);
+
+        if (Value != low)
+        {
+            Value = low;
+            await ValueChanged.InvokeAsync(low);
+        }
+
+        if (ValueEnd != high)
+        {
+            ValueEnd = high;
+            await ValueEndChanged.InvokeAsync(high);
+        }
+    }
+}

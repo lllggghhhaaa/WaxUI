@@ -1,0 +1,48 @@
+﻿@using WaxUI.Theme
+@using WaxUI.Services.Theme
+@inject IHttpContextAccessor HttpContextAccessor
+<!DOCTYPE html>
+<html lang="en" class="@ThemeClassAttr">
+
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <BasePath/>
+    <ResourcePreloader/>
+    <ThemePreloader />
+    <link rel="stylesheet" href="khamsin.css?v=@KhamsinCssVersion" />
+    <link rel="stylesheet" href="@Assets["WaxUI.Docs.styles.css"]"/>
+    <ImportMap/>
+    <FontMap/>
+    <link rel="icon" type="image/png" href="favicon.png"/>
+    <HeadOutlet @rendermode="InteractiveServer" />
+</head>
+
+<body>
+<Routes/>
+<ReconnectModal/>
+<script src="@Assets["_framework/blazor.web.js"]"></script>
+</body>
+
+</html>
+
+@code {
+    // MapKhamsinCss serves the stylesheet with a one-year immutable cache policy and the link has
+    // no fingerprint, so include the generated file's timestamp to refresh it after a rebuild.
+    private static readonly string KhamsinCssVersion = CssVersion();
+
+    private static string CssVersion()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "khamsin.css");
+        return File.Exists(path)
+            ? File.GetLastWriteTimeUtc(path).Ticks.ToString(System.Globalization.CultureInfo.InvariantCulture)
+            : "0";
+    }
+
+    // Blazor's enhanced SSR navigation patches the <html> class attribute from
+    // the server response, wiping the preloader-applied theme class off and
+    // flashing the wrong theme until interop re-applies it. SSR the current
+    // theme class from the cookie the theme module maintains instead, so the
+    // patch matches the client-applied value.
+    private string? ThemeClassAttr => ThemeCookie.ReadThemeClass(HttpContextAccessor.HttpContext);
+}

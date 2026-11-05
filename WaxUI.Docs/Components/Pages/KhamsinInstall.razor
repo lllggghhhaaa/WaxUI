@@ -1,0 +1,208 @@
+﻿@page "/khamsin/install"
+@rendermode InteractiveServer
+
+<PageTitle>Install Khamsin - WaxUI</PageTitle>
+
+<div class="mb-8">
+    <h1 class="text-3xl font-display font-bold text-foreground mb-2">Install Khamsin</h1>
+    <p class="text-muted-foreground">Add the Khamsin build-time utility CSS engine to a Blazor project.</p>
+</div>
+
+<div class="space-y-8">
+
+    <div class="p-6 rounded-3xl bg-muted border border-border">
+        <h2 class="font-semibold text-foreground mb-1">Package</h2>
+        <p class="text-sm text-muted-foreground">
+            Khamsin 0.3.0 bundles library CSS into <code class="bg-card px-1 rounded-[0.25rem]">khamsin.css</code>
+            and emits a Tailwind-compatible preflight. The package carries the runtime, the analyzer and
+            manifest generator, the MSBuild task and its
+            <code class="bg-card px-1 rounded-[0.25rem]">buildTransitive</code> props and targets.
+            WaxUI targets this version.
+        </p>
+        <p class="text-sm mt-3">
+            <a class="text-primary underline underline-offset-[3px]"
+               href="https://www.nuget.org/packages/Khamsin">nuget.org/packages/Khamsin</a>
+        </p>
+    </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h2 class="font-semibold text-foreground mb-1">Add the package</h2>
+        <p class="text-sm text-muted-foreground mb-4">
+            Install Khamsin into every project that writes Khamsin classes.
+        </p>
+        <pre class="bg-muted rounded-[calc(var(--radius)_+_4px)] p-4 overflow-x-auto text-sm"><code>dotnet add package Khamsin --version 0.3.0</code></pre>
+        <p class="text-sm text-muted-foreground mt-4 mb-2">Or add the reference by hand:</p>
+        <pre class="bg-muted rounded-[calc(var(--radius)_+_4px)] p-4 overflow-x-auto text-sm"><code>&lt;ItemGroup&gt;
+  &lt;PackageReference Include="Khamsin" Version="0.3.0" /&gt;
+&lt;/ItemGroup&gt;</code></pre>
+    </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h2 class="font-semibold text-foreground mb-1">Add the imports</h2>
+        <p class="text-sm text-muted-foreground mb-4">
+            Make <code class="bg-muted px-1 rounded-[0.25rem]">KhamsinClass</code> and the
+            <code class="bg-muted px-1 rounded-[0.25rem]">Kx</code> helpers available to components.
+        </p>
+        <pre class="bg-muted rounded-[calc(var(--radius)_+_4px)] p-4 overflow-x-auto text-sm"><code>@@using Khamsin</code></pre>
+    </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h2 class="font-semibold text-foreground mb-1">Load the stylesheet</h2>
+        <p class="text-sm text-muted-foreground mb-4">
+            The build task generates <code class="bg-muted px-1 rounded-[0.25rem]">khamsin.css</code> and
+            registers it as a static web asset. The file contains the theme, preflight, library CSS and
+            the utilities this app renders. Link it like any other stylesheet:
+        </p>
+        <pre class="bg-muted rounded-[calc(var(--radius)_+_4px)] p-4 overflow-x-auto text-sm"><code>@@* App.razor *@@
+&lt;link rel="stylesheet" href="khamsin.css" /&gt;</code></pre>
+        <p class="text-sm text-muted-foreground mt-4 mb-2">
+            A Blazor Server app can serve the generated file from an endpoint instead, with a content
+            hash and a one-year immutable cache policy:
+        </p>
+        <pre class="bg-muted rounded-[calc(var(--radius)_+_4px)] p-4 overflow-x-auto text-sm"><code>app.MapKhamsinCss();</code></pre>
+        <p class="text-sm text-muted-foreground mt-4">
+            On .NET 11 the static-web-assets compression pass rejects Khamsin's registration. Set
+            <code class="bg-muted px-1 rounded-[0.25rem]">KhamsinRegisterStaticWebAsset</code> to
+            <code class="bg-muted px-1 rounded-[0.25rem]">false</code> and use the endpoint. The
+            WaxUI docs app does exactly that.
+        </p>
+    </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h2 class="font-semibold text-foreground mb-1">Theme tokens</h2>
+        <p class="text-sm text-muted-foreground mb-4">
+            A library can ship its own <code class="bg-muted px-1 rounded-[0.25rem]">khamsin.json</code>.
+            Khamsin embeds that config in the assembly, and every consuming app merges it under its own
+            configuration, so semantic classes such as
+            <code class="bg-muted px-1 rounded-[0.25rem]">bg-primary</code>,
+            <code class="bg-muted px-1 rounded-[0.25rem]">text-foreground</code> and
+            <code class="bg-muted px-1 rounded-[0.25rem]">font-display</code> validate and emit without
+            being copied into the app.
+        </p>
+        <p class="text-sm text-muted-foreground mb-2">Values can stay in CSS custom properties:</p>
+        <pre class="bg-muted rounded-[calc(var(--radius)_+_4px)] p-4 overflow-x-auto text-sm"><code>{
+  "dark": ".theme-dark",
+  "colors": { "primary": "var(--primary)" }
+}</code></pre>
+        <p class="text-sm text-muted-foreground mt-4">
+            Merge order is built-in defaults, then referenced libraries in assembly-name order, then the
+            app's own <code class="bg-muted px-1 rounded-[0.25rem]">khamsin.json</code>. The app always
+            wins, so overriding one library token does not require restating the rest.
+        </p>
+        <p class="text-sm text-muted-foreground mt-3">
+            A library can also list stylesheets under
+            <code class="bg-muted px-1 rounded-[0.25rem]">css</code> in its configuration. Those files
+            are embedded with the config and emitted in the base layer, so consumers still link only
+            <code class="bg-muted px-1 rounded-[0.25rem]">khamsin.css</code>.
+        </p>
+    </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h2 class="font-semibold text-foreground mb-1">Give a component defaults</h2>
+        <p class="text-sm text-muted-foreground mb-4">
+            Components expose a <code class="bg-muted px-1 rounded-[0.25rem]">Khamsin</code> parameter by
+            inheriting from <code class="bg-muted px-1 rounded-[0.25rem]">KhamsinComponentBase</code> and
+            concatenating their defaults with it.
+        </p>
+        <pre class="bg-muted rounded-[calc(var(--radius)_+_4px)] p-4 overflow-x-auto text-sm"><code>@@inherits KhamsinComponentBase
+
+&lt;button type="button" class="@@(Defaults + Khamsin)"&gt;@@ChildContent&lt;/button&gt;
+
+@@code {
+    private static readonly KhamsinClass Defaults = "rounded-[calc(var(--radius)_-_2px)] bg-ocean-600 px-4 py-2 text-white";
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}</code></pre>
+        <p class="text-sm text-muted-foreground mt-4 mb-2">Consumers then override only what they need:</p>
+        <pre class="bg-muted rounded-[calc(var(--radius)_+_4px)] p-4 overflow-x-auto text-sm"><code>&lt;PrimaryButton Khamsin=&quot;@@("px-6")&quot;&gt;Save&lt;/PrimaryButton&gt;</code></pre>
+        <p class="text-sm text-muted-foreground mt-3">
+            <code class="bg-muted px-1 rounded-[0.25rem]">px-6</code> wins over the default
+            <code class="bg-muted px-1 rounded-[0.25rem]">px-4</code> at runtime. Both classes are in the
+            stylesheet because both are literals in the source.
+        </p>
+    </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h2 class="font-semibold text-foreground mb-1">Verify the install</h2>
+        <p class="text-sm text-muted-foreground mb-4">
+            Build a web or executable project. The task writes the stylesheet after compilation:
+        </p>
+        <pre class="bg-muted rounded-[calc(var(--radius)_+_4px)] p-4 overflow-x-auto text-sm"><code>dotnet build
+# obj/&lt;configuration&gt;/&lt;tfm&gt;/khamsin.css</code></pre>
+        <p class="text-sm text-muted-foreground mt-3">
+            Open the file and check that it contains the classes your markup actually uses, for
+            example <code class="bg-muted px-1 rounded-[0.25rem]">.px-6</code> and
+            <code class="bg-muted px-1 rounded-[0.25rem]">.p-4</code>. Referenced libraries do not emit CSS by
+            default; they carry manifests, and the consuming app collects the classes of the
+            components it renders.
+        </p>
+    </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h2 class="font-semibold text-foreground mb-1">Build settings</h2>
+        <p class="text-sm text-muted-foreground mb-4">
+            All settings are optional. Set them in the project file or on the command line.
+        </p>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-border">
+                        <th class="py-2 pr-4 text-left text-muted-foreground font-medium">Property</th>
+                        <th class="py-2 pr-4 text-left text-muted-foreground font-medium">Default</th>
+                        <th class="py-2 text-left text-muted-foreground font-medium">Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="border-b border-border">
+                        <td class="py-3 pr-4 text-foreground font-medium"><code>KhamsinEmitCss</code></td>
+                        <td class="py-3 pr-4 text-muted-foreground">true for web/executable projects</td>
+                        <td class="py-3 text-muted-foreground">Emit the stylesheet for this project.</td>
+                    </tr>
+                    <tr class="border-b border-border">
+                        <td class="py-3 pr-4 text-foreground font-medium"><code>KhamsinCssFileName</code></td>
+                        <td class="py-3 pr-4 text-muted-foreground">khamsin.css</td>
+                        <td class="py-3 text-muted-foreground">File name registered as a static web asset.</td>
+                    </tr>
+                    <tr>
+                        <td class="py-3 pr-4 text-foreground font-medium"><code>KhamsinRegisterStaticWebAsset</code></td>
+                        <td class="py-3 pr-4 text-muted-foreground">true</td>
+                        <td class="py-3 text-muted-foreground">Register the generated file with the static web asset pipeline.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h2 class="font-semibold text-foreground mb-1">Troubleshooting</h2>
+        <ul class="list-none space-y-2 text-sm text-muted-foreground">
+            <li>
+                <span class="text-foreground font-medium">NU1101: package not found.</span>
+                The package id or version does not match nuget.org, or the feed is unavailable.
+            </li>
+            <li>
+                <span class="text-foreground font-medium">KHM001.</span>
+                A class expression is not a literal. Use <code class="bg-muted px-1 rounded-[0.25rem]">Kx.When</code>
+                or <code class="bg-muted px-1 rounded-[0.25rem]">Kx.Variant</code>, or move runtime values into
+                CSS custom properties such as <code class="bg-muted px-1 rounded-[0.25rem]">w-(--w)</code>.
+            </li>
+            <li>
+                <span class="text-foreground font-medium">KHM002.</span>
+                The class is not in the utility registry. Check the supported utilities reference.
+            </li>
+            <li>
+                <span class="text-foreground font-medium">A library component has no styles.</span>
+                The consuming app must reference Khamsin and must actually render the component;
+                unused components contribute nothing.
+            </li>
+            <li>
+                <span class="text-foreground font-medium">khamsin.css returns 404.</span>
+                Confirm the project emits CSS (<code class="bg-muted px-1 rounded-[0.25rem]">KhamsinEmitCss</code>)
+                and that the link matches <code class="bg-muted px-1 rounded-[0.25rem]">KhamsinCssFileName</code>,
+                or map the endpoint with <code class="bg-muted px-1 rounded-[0.25rem]">MapKhamsinCss()</code>.
+            </li>
+        </ul>
+    </div>
+
+</div>

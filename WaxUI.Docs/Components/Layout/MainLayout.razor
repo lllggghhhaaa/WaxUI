@@ -1,0 +1,20 @@
+﻿@using WaxUI.Dialog
+@inherits LayoutComponentBase
+
+<div class="page">
+    <DocsSidebar />
+
+    <main>
+        <article class="px-6 py-8 max-w-5xl mx-auto w-full">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+<WaxDialogOutlet @rendermode="InteractiveServer" />

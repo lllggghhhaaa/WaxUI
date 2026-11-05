@@ -1,0 +1,115 @@
+﻿@using LucideBlazor
+@using WaxUI.Spoiler
+@using WaxUI.Utils
+
+@inherits WaxComponent
+
+<button @onclick="Toggle" class="@CssClass" style="@Style" @attributes="AdditionalAttributes">
+    @if (!string.IsNullOrEmpty(Icon))
+    {
+        <LucideIcon Size="14" Name="@Icon" ClassName="@(Cn.Of("ml-0.5").Value)" />
+    }
+
+    @if (Spoiler)
+    {
+        <span class="@SpoilerWrapperClass">
+            <span class="@SpoilerContentClass">@ChildContent</span>
+            <span class="@SpoilerVeilClass" aria-hidden="true">
+                <LucideIcon Name="eye" Size="12" ClassName="@WaxSpoilerStyles.Hint.Value"/>
+            </span>
+        </span>
+    }
+    else
+    {
+        @ChildContent
+    }
+
+    @if (Value)
+    {
+        <LucideIcon Size="14" Name="check" ClassName="@(Cn.Of("ml-0.5").Value)" />
+    }
+
+    @if (Variant == WaxChipVariant.Input)
+    {
+        <button type="button"
+                class="ml-1 opacity-60 hover:opacity-100"
+                @onclick:stopPropagation
+                @onclick="@(_ => OnRemove.InvokeAsync())">
+            <LucideIcon Name="x" Size="12"/>
+        </button>
+    }
+</button>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string? Icon { get; set; }
+    [Parameter] public WaxChipVariant Variant { get; set; } = WaxChipVariant.Filter;
+
+    /// <summary>Hides the chip label behind a blur + gradient veil. The first click reveals it instead of toggling.</summary>
+    [Parameter] public bool Spoiler { get; set; }
+
+    [Parameter]
+    public bool Value { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> ValueChanged { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> OnToggle { get; set; }
+
+    [Parameter]
+    public EventCallback OnRemove { get; set; }
+
+    private bool _spoilerRevealed;
+
+    private KhamsinClass Base =>
+        Cn.Of("inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer");
+
+    private KhamsinClass SelectedClass =>
+        Cn.Of(Value
+            ? "bg-primary text-primary-foreground shadow-sm"
+            : "bg-muted text-foreground hover:bg-[#E8D4C0] border border-border");
+
+    private KhamsinClass VariantClass =>
+        Cn.Of(Variant == WaxChipVariant.Input ? "pr-2" : null);
+
+    private string SpoilerWrapperClass => Cn.Of(
+        WaxSpoilerStyles.Wrapper,
+        "inline-block",
+        (!_spoilerRevealed, WaxSpoilerStyles.Hidden)).Value;
+
+    private string SpoilerContentClass => Cn.Of(
+        "inline",
+        WaxSpoilerStyles.Content,
+        (!_spoilerRevealed, WaxSpoilerStyles.ContentBlurred)).Value;
+
+    private string SpoilerVeilClass => Cn.Of(
+        WaxSpoilerStyles.Veil,
+        _spoilerRevealed ? WaxSpoilerStyles.VeilHidden : WaxSpoilerStyles.VeilVisible).Value;
+
+    private string CssClass =>
+        Cn.Of(
+            Base,
+            SelectedClass,
+            VariantClass,
+            Class).Value;
+
+    private async Task Toggle()
+    {
+        if (Spoiler && !_spoilerRevealed)
+        {
+            _spoilerRevealed = true;
+            return;
+        }
+
+        Value = !Value;
+
+        await ValueChanged.InvokeAsync(Value);
+        await OnToggle.InvokeAsync(Value);
+    }
+
+    private async Task Remove()
+    {
+        await OnRemove.InvokeAsync();
+    }
+}

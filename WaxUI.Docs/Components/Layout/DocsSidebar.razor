@@ -1,0 +1,109 @@
+@rendermode InteractiveServer
+@implements IDisposable
+@inject IThemeService Theme
+@using LucideBlazor
+@using WaxUI.Badge
+@using WaxUI.Navigation
+@using WaxUI.Services.Theme
+@using WaxUI.Switch
+@using WaxUI.Theme
+
+<WaxSidebar Groups="_groups">
+    <Header>
+        <div class="flex items-center gap-3 mb-3">
+            <div class="w-9 h-9 rounded-2xl bg-primary flex items-center justify-center">
+                <LucideIcon Name="coffee" Size="18" ClassName="text-primary-foreground" />
+            </div>
+            <div>
+                <p class="font-display font-semibold text-foreground leading-tight">WaxUI</p>
+                <p class="text-xs text-muted-foreground">.</p>
+            </div>
+        </div>
+        <WaxBadge Color="WaxColor.Muted">v0.9.11</WaxBadge>
+    </Header>
+
+    <Footer>
+        <div class="flex items-center justify-between px-2">
+            <span class="text-sm text-muted-foreground">Dark mode</span>
+            <WaxSwitch Value="_darkMode" ValueChanged="OnDarkModeChanged" />
+        </div>
+    </Footer>
+</WaxSidebar>
+
+@code {
+    private bool _darkMode;
+
+    private List<WaxSidebarGroup> _groups =
+    [
+        new("Getting Started",
+        [
+            new WaxSidebarItem("getting-started", "Installation", "book-open"),
+            new WaxSidebarItem("khamsin/install", "Install Khamsin", "wind"),
+        ]),
+        new("Components",
+        [
+            new WaxSidebarItem("component/accordion", "Accordion", "chevrons-up-down"),
+            new WaxSidebarItem("component/alert", "Alert", "triangle-alert"),
+            new WaxSidebarItem("component/avatar", "Avatar", "user"),
+            new WaxSidebarItem("component/badge", "Badge", "badge-check"),
+            new WaxSidebarItem("component/breadcrumb", "Breadcrumb", "chevron-right"),
+            new WaxSidebarItem("component/button", "Button", "square"),
+            new WaxSidebarItem("component/card", "Card", "credit-card"),
+            new WaxSidebarItem("component/checkbox", "Checkbox", "square-check"),
+            new WaxSidebarItem("component/chip", "Chip", "tags"),
+            new WaxSidebarItem("component/color-picker", "Color Picker", "pipette"),
+            new WaxSidebarItem("component/date-picker", "Date Picker", "calendar-days"),
+            new WaxSidebarItem("component/dialog", "Dialog", "message-square"),
+            new WaxSidebarItem("component/dropzone", "Dropzone", "cloud-upload"),
+            new WaxSidebarItem("component/empty-state", "Empty State", "inbox"),
+            new WaxSidebarItem("component/fab", "Fab", "plus"),
+            new WaxSidebarItem("component/heading", "Heading", "heading"),
+            new WaxSidebarItem("component/icon-button", "Icon Button", "mouse-pointer-click"),
+            new WaxSidebarItem("component/menu", "Menu", "menu"),
+            new WaxSidebarItem("component/navigation", "Navigation", "compass"),
+            new WaxSidebarItem("component/popover", "Popover", "square-mouse-pointer"),
+            new WaxSidebarItem("component/progress", "Progress", "gauge"),
+            new WaxSidebarItem("component/qr-code", "QR Code", "qr-code"),
+            new WaxSidebarItem("component/radio", "Radio", "circle-dot"),
+            new WaxSidebarItem("component/reaction-chip", "Reaction Chip", "face-slightly-smiling-plus"),
+            new WaxSidebarItem("component/select", "Select", "chevron-down"),
+            new WaxSidebarItem("component/setting-row", "Setting Row", "settings"),
+            new WaxSidebarItem("component/slider", "Slider", "sliders-horizontal"),
+            new WaxSidebarItem("component/spoiler", "Spoiler", "eye-off"),
+            new WaxSidebarItem("component/switch", "Switch", "toggle-left"),
+            new WaxSidebarItem("component/tab", "Tab", "panel-left"),
+            new WaxSidebarItem("component/text-field", "Text Field", "type"),
+        ]),
+    ];
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Theme.ThemeChanged += OnThemeChanged;
+
+            await Theme.InitializeAsync();
+
+            _darkMode = Theme.CurrentTheme == ThemeMode.Dark;
+
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnDarkModeChanged(bool value)
+    {
+        _darkMode = value;
+        await Theme.SetThemeAsync(value ? ThemeMode.Dark : ThemeMode.Light);
+    }
+
+    private void OnThemeChanged()
+    {
+        Console.WriteLine("Theme changed");
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Theme.ThemeChanged -= OnThemeChanged;
+    }
+}

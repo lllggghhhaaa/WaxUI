@@ -1,0 +1,48 @@
+@using LucideBlazor
+@using WaxUI.Utils
+
+@inherits WaxComponent
+
+<button type="button" class="@RootClass" style="@Style" @attributes="AdditionalAttributes">
+    <LucideIcon Size="IconSize" Name="@Icon"></LucideIcon>
+    @if (ChildContent is not null)
+    {
+        <span class="font-medium text-sm">@ChildContent</span>
+    }
+</button>
+
+@code {
+    [Parameter] public WaxFabSize Size { get; set; } = WaxFabSize.Medium;
+    [Parameter] public WaxFabVariant Variant { get; set; } = WaxFabVariant.Primary;
+    [Parameter, EditorRequired] public string Icon { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string RootClass =>
+        Cn.Of("inline-flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer",
+            SizeClass, VariantClass, Class).Value;
+
+    private KhamsinClass SizeClass => Size switch
+    {
+        WaxFabSize.Small => Cn.Of("w-10 h-10 rounded-2xl"),
+        WaxFabSize.Medium => Kx.When(ChildContent is not null,
+            "h-14 px-6 rounded-[18px] gap-3",
+            "w-14 h-14 rounded-[18px]"),
+        WaxFabSize.Large => Cn.Of("w-24 h-24 rounded-[28px]"),
+        _ => throw new ArgumentOutOfRangeException(nameof(Size))
+    };
+
+    private KhamsinClass VariantClass => Kx.Variant(Variant,
+        (WaxFabVariant.Primary, "bg-primary-foreground text-primary shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30"),
+        (WaxFabVariant.Secondary, "bg-secondary text-secondary-foreground shadow-lg shadow-secondary/20 hover:shadow-xl hover:shadow-secondary/30"),
+        (WaxFabVariant.Tertiary, "bg-accent text-accent-foreground shadow-lg shadow-accent/20 hover:shadow-xl hover:shadow-accent/30"),
+        (WaxFabVariant.Surface, "bg-card text-foreground shadow-lg shadow-black/10 hover:shadow-xl hover:shadow-black/15"));
+
+    private int IconSize => Size switch
+    {
+        WaxFabSize.Small => 18,
+        WaxFabSize.Medium => 24,
+        WaxFabSize.Large => 36,
+        _ => throw new ArgumentOutOfRangeException(nameof(Size))
+    };
+
+}

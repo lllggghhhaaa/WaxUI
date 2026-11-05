@@ -1,0 +1,7 @@
+{
+  "name": "waxui.docs",
+  "version": "1.0.0",
+  "description": "Docs site for WaxUI. Dependencies live in the repo-root npm workspace.",
+  "author": "lllggghhhaaaa",
+  "license": "Apache-2.0"
+}

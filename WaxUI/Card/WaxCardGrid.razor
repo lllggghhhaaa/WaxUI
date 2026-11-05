@@ -1,0 +1,16 @@
+@using WaxUI.Utils
+
+@inherits WaxComponent
+
+<div class="@CssClass"
+     style='grid-template-columns:repeat(@Columns, minmax(0,1fr)); @Style'
+     @attributes="AdditionalAttributes">
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public int Columns { get; set; } = 3;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string CssClass => Cn.Of("grid gap-5", Class).Value;
+}

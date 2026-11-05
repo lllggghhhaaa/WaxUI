@@ -1,5 +1,0 @@
-﻿@import "tailwindcss";
-@import "../WaxComponents/Theme/tokens.css";
-
-/* Docs app styles only. Component classes come from `_content/WaxComponents/app.css`. */
-@source "./**/*.razor";

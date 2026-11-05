@@ -1,0 +1,117 @@
+@page "/component/date-picker"
+@rendermode InteractiveServer
+@using WaxUI.DatePicker
+@using WaxUI.Tabs
+
+<PageTitle>Date Picker - WaxUI</PageTitle>
+
+<div class="mb-8">
+    <h1 class="text-3xl font-display font-bold text-foreground mb-2">Date Picker</h1>
+    <p class="text-muted-foreground">A labelled calendar popover with month navigation, today highlighting, disabled dates and an optional clear action.</p>
+</div>
+
+<div class="space-y-6">
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h3 class="font-semibold text-foreground mb-1">Basic</h3>
+        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_basicTabs" TabListClass="mb-4" />
+    </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h3 class="font-semibold text-foreground mb-1">Initial Date</h3>
+        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_initialTabs" TabListClass="mb-4" />
+    </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h3 class="font-semibold text-foreground mb-1">Past Dates</h3>
+        <p class="mb-3 text-[13px] text-muted-foreground">Past days are disabled by default; <code class="bg-muted px-1.5 py-0.5 rounded text-xs">AllowPastDates</code> opens the whole calendar.</p>
+        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_pastTabs" TabListClass="mb-4" />
+    </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h3 class="font-semibold text-foreground mb-1">Disabled</h3>
+        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_disabledTabs" TabListClass="mb-4" />
+    </div>
+</div>
+
+@code {
+    private DateTime? _basicDate;
+    private DateTime _initialDate = DateTime.Today.AddDays(10);
+    private DateTime? _pastDate;
+    private List<WaxTabItem> _basicTabs = [];
+    private List<WaxTabItem> _initialTabs = [];
+    private List<WaxTabItem> _pastTabs = [];
+    private List<WaxTabItem> _disabledTabs = [];
+
+    protected override void OnInitialized()
+    {
+        _basicTabs =
+        [
+            new("Preview", Content: @<div class="max-w-sm">
+                <WaxDatePicker Label="Due date" @bind-Value="_basicDate" />
+                <p class="mt-3 text-xs text-muted-foreground">@(_basicDate is { } date ? date.ToString("ddd, MMM d, yyyy") : "No date selected yet.")</p>
+            </div>, Icon: "monitor-dot"),
+            new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_basicCode</code></pre>, Icon: "code")
+        ];
+
+        _initialTabs =
+        [
+            new("Preview", Content: @<div class="max-w-sm">
+                <WaxDatePicker Label="Launch date" DefaultValue="_initialDate" />
+            </div>, Icon: "monitor-dot"),
+            new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_initialCode</code></pre>, Icon: "code")
+        ];
+
+        _pastTabs =
+        [
+            new("Preview", Content: @<div class="max-w-sm">
+                <WaxDatePicker Label="Birthday" AllowPastDates="true" @bind-Value="_pastDate" />
+                <p class="mt-3 text-xs text-muted-foreground">@(_pastDate is { } date ? date.ToString("MMM d, yyyy") : "No date selected yet.")</p>
+            </div>, Icon: "monitor-dot"),
+            new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_pastCode</code></pre>, Icon: "code")
+        ];
+
+        _disabledTabs =
+        [
+            new("Preview", Content: @<div class="max-w-sm">
+                <WaxDatePicker Label="Check-in" DefaultValue="_initialDate" Disabled="true" />
+            </div>, Icon: "monitor-dot"),
+            new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_disabledCode</code></pre>, Icon: "code")
+        ];
+    }
+
+    private static string _basicCode = """
+        @using WaxUI.DatePicker
+
+        <WaxDatePicker Label="Due date" @bind-Value="_date" />
+
+        @code {
+            private DateTime? _date;
+        }
+        """;
+
+    private static string _initialCode = """
+        @using WaxUI.DatePicker
+
+        <WaxDatePicker Label="Launch date" DefaultValue="_initial" />
+
+        @code {
+            private DateTime _initial = DateTime.Today.AddDays(10);
+        }
+        """;
+
+    private static string _pastCode = """
+        @using WaxUI.DatePicker
+
+        <WaxDatePicker Label="Birthday" AllowPastDates="true" @bind-Value="_date" />
+
+        @code {
+            private DateTime? _date;
+        }
+        """;
+
+    private static string _disabledCode = """
+        @using WaxUI.DatePicker
+
+        <WaxDatePicker Label="Check-in" DefaultValue="_initial" Disabled="true" />
+        """;
+}

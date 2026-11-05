@@ -1,0 +1,33 @@
+@using WaxUI.Spoiler
+@using WaxUI.Utils
+
+@inherits WaxComponent
+
+<div class="@CssClass" style="@Style" @attributes="AdditionalAttributes">
+    <p class="mb-0 mt-0 font-mono text-xs font-medium tracking-wider text-primary">@Eyebrow.ToUpperInvariant()</p>
+    @if (Spoiler)
+    {
+        <WaxSpoiler>
+            <p class="mb-0 mt-2 font-display text-3xl font-semibold sm:text-4xl">@Title</p>
+            <p class="mt-2 max-w-xl leading-relaxed text-muted-foreground">@Description</p>
+        </WaxSpoiler>
+    }
+    else
+    {
+        <p class="mb-0 mt-2 font-display text-3xl font-semibold sm:text-4xl">@Title</p>
+        <p class="mt-2 max-w-xl leading-relaxed text-muted-foreground">@Description</p>
+    }
+</div>
+
+@code {
+    [Parameter] public string Eyebrow { get; set; } = string.Empty;
+
+    [Parameter] public string Title { get; set; } = string.Empty;
+
+    [Parameter] public string Description { get; set; } = string.Empty;
+
+    /// <summary>Hides Title and Description behind a blur + gradient veil, revealed on click (Eyebrow stays visible).</summary>
+    [Parameter] public bool Spoiler { get; set; }
+
+    private string CssClass => Cn.Of("mb-7", Class).Value;
+}

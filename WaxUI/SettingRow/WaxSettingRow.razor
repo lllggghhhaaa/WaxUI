@@ -1,0 +1,120 @@
+﻿@using LucideBlazor
+@using WaxUI.Spoiler
+@using WaxUI.Switch
+@using WaxUI.Utils
+
+@inherits WaxComponent
+
+<button type="button"
+        class="@CssClass"
+        disabled="@Disabled"
+        style="@Style"
+        @attributes="AdditionalAttributes"
+        @onclick="HandleToggle">
+    <span class="min-w-0 flex-1">
+        @if (Spoiler)
+        {
+            <span class="@SpoilerWrapperClass">
+                <span class="@SpoilerContentClass">
+                    <span class="block text-sm font-medium text-foreground">@Title</span>
+                    @if (!string.IsNullOrEmpty(Description))
+                    {
+                        <span class="block text-xs text-muted-foreground">@Description</span>
+                    }
+                </span>
+                <span class="@SpoilerVeilClass" aria-hidden="true">
+                    <LucideIcon Name="eye" Size="12" ClassName="@WaxSpoilerStyles.Hint.Value"/>
+                </span>
+            </span>
+        }
+        else
+        {
+            <span class="block text-sm font-medium text-foreground">@Title</span>
+            @if (!string.IsNullOrEmpty(Description))
+            {
+                <span class="block text-xs text-muted-foreground">@Description</span>
+            }
+        }
+    </span>
+    <span class="shrink-0" aria-hidden="true">
+        <WaxSwitch Value="@IsOn" Interactive="false" Size="@SwitchSize" ShowCheck="@ShowCheck" Style="vertical-align: center" />
+    </span>
+</button>
+
+@code {
+    [Parameter] public string Title { get; set; } = string.Empty;
+
+    [Parameter] public string Description { get; set; } = string.Empty;
+
+    /// <summary>Hides title and description behind a blur + gradient veil. The first click reveals them instead of toggling.</summary>
+    [Parameter] public bool Spoiler { get; set; }
+
+    /// <summary>Controlled state; leave unbound to make the row keep its own state from Initial.</summary>
+    [Parameter] public bool Value { get; set; }
+
+    [Parameter] public EventCallback<bool> ValueChanged { get; set; }
+
+    /// <summary>Seed state for the self-managed (uncontrolled) mode.</summary>
+    [Parameter] public bool Initial { get; set; }
+
+    [Parameter] public bool Disabled { get; set; }
+
+    [Parameter] public WaxSwitchSize SwitchSize { get; set; } = WaxSwitchSize.Normal;
+
+    [Parameter] public bool ShowCheck { get; set; } = true;
+
+    private bool IsOn { get; set; }
+
+    private bool _spoilerRevealed;
+
+    private bool Controlled => ValueChanged.HasDelegate;
+
+    protected override void OnInitialized() => IsOn = Initial;
+
+    protected override void OnParametersSet()
+    {
+        if (Controlled)
+        {
+            IsOn = Value;
+        }
+    }
+
+    private async Task HandleToggle()
+    {
+        if (Disabled)
+        {
+            return;
+        }
+
+        if (Spoiler && !_spoilerRevealed)
+        {
+            _spoilerRevealed = true;
+            return;
+        }
+
+        IsOn = !IsOn;
+        if (Controlled)
+        {
+            await ValueChanged.InvokeAsync(IsOn);
+        }
+    }
+
+    private string SpoilerWrapperClass => Cn.Of(
+        WaxSpoilerStyles.Wrapper,
+        (!_spoilerRevealed, WaxSpoilerStyles.Hidden)).Value;
+
+    private string SpoilerContentClass => Cn.Of(
+        "block",
+        WaxSpoilerStyles.Content,
+        (!_spoilerRevealed, WaxSpoilerStyles.ContentBlurred)).Value;
+
+    private string SpoilerVeilClass => Cn.Of(
+        WaxSpoilerStyles.Veil,
+        _spoilerRevealed ? WaxSpoilerStyles.VeilHidden : WaxSpoilerStyles.VeilVisible).Value;
+
+    private string CssClass =>
+        Cn.Of(
+            "flex w-full cursor-pointer items-center gap-3 rounded-2xl border-0 bg-transparent px-2 py-2.5 text-left transition-colors hover:bg-muted",
+            Disabled ? "cursor-default opacity-60" : null,
+            Class).Value;
+}

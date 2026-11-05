@@ -1,0 +1,68 @@
+@using LucideBlazor
+@using WaxUI.Spoiler
+@using WaxUI.Utils
+
+@inherits WaxComponent
+
+<div class="@CssClass" style="@Style" @attributes="AdditionalAttributes">
+    @if (HasHeader)
+    {
+        <div class="mb-3 flex items-center gap-2 text-primary">
+            @if (!string.IsNullOrEmpty(Icon))
+            {
+                <LucideIcon Name="@Icon" Size="18"/>
+            }
+            @if (!string.IsNullOrEmpty(Title))
+            {
+                <p class="mb-0 mt-0 font-semibold text-foreground">
+                    @if (Spoiler)
+                    {
+                        <WaxSpoiler Inline>@Title</WaxSpoiler>
+                    }
+                    else
+                    {
+                        @Title
+                    }
+                </p>
+            }
+        </div>
+    }
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public WaxCardVariant Variant { get; set; } = WaxCardVariant.Elevated;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>Optional header title; rendered with Icon in a primary-tinted row.</summary>
+    [Parameter] public string? Title { get; set; }
+
+    /// <summary>Lucide icon name for the optional header row.</summary>
+    [Parameter] public string? Icon { get; set; }
+
+    /// <summary>Hides the header title behind a blur + gradient veil, revealed on click.</summary>
+    [Parameter] public bool Spoiler { get; set; }
+
+    /// <summary>Compact padding (p-5) for dense layouts like settings panels.</summary>
+    [Parameter] public bool Compact { get; set; }
+
+    /// <summary>Hover elevation lift; disable for static containers like dialogs and settings panels.</summary>
+    [Parameter] public bool Hoverable { get; set; } = true;
+
+    private bool HasHeader => !string.IsNullOrEmpty(Title) || !string.IsNullOrEmpty(Icon);
+
+    private const string Base = "rounded-3xl transition-all duration-300";
+
+    private KhamsinClass VariantClass => Variant switch
+    {
+        WaxCardVariant.Elevated => Hoverable
+            ? Cn.Of("bg-card shadow-md shadow-black/8 hover:shadow-xl hover:shadow-black/12 hover:-translate-y-0.5")
+            : Cn.Of("bg-card shadow-md shadow-black/8"),
+        WaxCardVariant.Filled => Cn.Of("bg-muted"),
+        WaxCardVariant.Flat => Cn.Of("bg-card border"),
+        WaxCardVariant.Outlined => Cn.Of("bg-background border-2 border-border"),
+        _ => throw new ArgumentOutOfRangeException(nameof(Variant))
+    };
+
+    private string CssClass => Cn.Of(Base, Compact ? "p-5" : "p-6", VariantClass, Class).Value;
+}

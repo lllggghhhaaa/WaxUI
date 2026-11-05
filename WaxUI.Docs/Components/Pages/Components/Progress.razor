@@ -1,0 +1,128 @@
+@page "/component/progress"
+@rendermode InteractiveServer
+@using WaxUI.Progress
+@using WaxUI.Slider
+@using WaxUI.Tabs
+@using WaxUI.Theme
+
+<PageTitle>Progress - WaxUI</PageTitle>
+
+<div class="mb-8">
+    <h1 class="text-3xl font-display font-bold text-foreground mb-2">Progress Bar</h1>
+    <p class="text-muted-foreground">Animated progress bars for loading states and completion tracking.</p>
+</div>
+
+<div class="space-y-6">
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h3 class="font-semibold text-foreground mb-1">Colors</h3>
+        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_colorsTabs" TabListClass="mb-4" />
+    </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h3 class="font-semibold text-foreground mb-1">Custom Colors</h3>
+        <p class="mb-3 text-[13px] text-muted-foreground">
+            Use any theme token with <code class="bg-muted px-1.5 py-0.5 rounded text-xs">new WaxColor("chart-4")</code>
+            or an explicit CSS value with <code class="bg-muted px-1.5 py-0.5 rounded text-xs">WaxColor.Custom("#3A8FA8")</code>.
+        </p>
+        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_customTabs" TabListClass="mb-4" />
+    </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h3 class="font-semibold text-foreground mb-1">Interactive Demo</h3>
+        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_interactiveTabs" TabListClass="mb-4" />
+    </div>
+</div>
+
+@code {
+    private static List<WaxTabItem> _colorsTabs =
+    [
+        new("Preview", Content: @<div class="space-y-4">
+            <div>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-foreground">Primary</span>
+                    <span class="text-muted-foreground">25%</span>
+                </div>
+                <WaxProgressBar Color="WaxColor.Primary" Value="25" />
+            </div>
+            <div>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-foreground">Secondary</span>
+                    <span class="text-muted-foreground">50%</span>
+                </div>
+                <WaxProgressBar Color="WaxColor.Secondary" Value="50" />
+            </div>
+            <div>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-foreground">Accent</span>
+                    <span class="text-muted-foreground">75%</span>
+                </div>
+                <WaxProgressBar Color="WaxColor.Accent" Value="75" />
+            </div>
+            <div>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-foreground">Muted</span>
+                    <span class="text-muted-foreground">100%</span>
+                </div>
+                <WaxProgressBar Color="WaxColor.Muted" Value="100" />
+            </div>
+        </div>, Icon: "monitor-dot"),
+        new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_colorsCode</code></pre>, Icon: "code")
+    ];
+
+    private List<WaxTabItem> _interactiveTabs = [];
+
+    private static readonly WaxColor _chartColor = new("chart-4");
+    private static readonly WaxColor _tealColor = WaxColor.Custom("#3A8FA8");
+
+    private static List<WaxTabItem> _customTabs =
+    [
+        new("Preview", Content: @<div class="space-y-4">
+            <div>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-foreground">Theme token (chart-4)</span>
+                    <span class="text-muted-foreground">80%</span>
+                </div>
+                <WaxProgressBar Color="_chartColor" Value="80" />
+            </div>
+            <div>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-foreground">Explicit hex</span>
+                    <span class="text-muted-foreground">45%</span>
+                </div>
+                <WaxProgressBar Color="_tealColor" Value="45" />
+            </div>
+        </div>, Icon: "monitor-dot"),
+        new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_customCode</code></pre>, Icon: "code")
+    ];
+
+    private double _progressValue = 65;
+
+    private static string _colorsCode = "@using WaxUI.Progress\n\n<WaxProgressBar Color=\"WaxColor.Primary\" Value=\"25\" />\n<WaxProgressBar Color=\"WaxColor.Secondary\" Value=\"50\" />\n<WaxProgressBar Color=\"WaxColor.Accent\" Value=\"75\" />\n<WaxProgressBar Color=\"WaxColor.Muted\" Value=\"100\" />";
+
+    private static string _customCode = """
+        @using WaxUI.Progress
+        @using WaxUI.Theme
+
+        @code {
+            private static readonly WaxColor _chart = new("chart-4");
+            private static readonly WaxColor _teal = WaxColor.Custom("#3A8FA8");
+        }
+
+        <WaxProgressBar Color="_chart" Value="80" />
+        <WaxProgressBar Color="_teal" Value="45" />
+        """;
+
+    private static string _interactiveCode = "@using WaxUI.Progress\n@using WaxUI.Slider\n\n<WaxProgressBar Color=\"WaxColor.Primary\" Value=\"@((int)_progressValue)\" />\n<WaxSlider @bind-Value=\"_progressValue\" Label=\"Progress\" Min=\"0\" Max=\"100\" Color=\"WaxColor.Primary\" Format=\"0\" />\n\n@code {\n    private double _progressValue = 65;\n}";
+
+    protected override void OnInitialized()
+    {
+        _interactiveTabs =
+        [
+            new("Preview", Content: @<div class="space-y-4">
+                <WaxProgressBar Color="WaxColor.Primary" Value="@((int)_progressValue)" />
+                <WaxSlider @bind-Value="_progressValue" Label="Progress" Min="0" Max="100" Color="WaxColor.Primary" Format="0" />
+            </div>, Icon: "monitor-dot"),
+            new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_interactiveCode</code></pre>, Icon: "code")
+        ];
+    }
+}

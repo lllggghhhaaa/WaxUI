@@ -1,0 +1,66 @@
+@using WaxUI.Utils
+
+@inherits WaxComponent
+
+<div class="@GetContainerClass()" style="@Style" @attributes="AdditionalAttributes">
+    @foreach (var opt in Options)
+    {
+        <button type="button"
+                @onclick="() => Select(opt)"
+                disabled="@opt.Disabled"
+                class="@GetButtonClass(opt) group">
+
+            <div class="@GetIndicatorClass(opt)">
+                @if (Value == opt.Value)
+                {
+                    <div class="w-2.5 h-2.5 rounded-full bg-primary"></div>
+                }
+            </div>
+
+            <div>
+                <p class="text-sm font-medium text-foreground">@opt.Label</p>
+                @if (!string.IsNullOrEmpty(opt.Description))
+                {
+                    <p class="text-xs text-muted-foreground mt-0.5">@opt.Description</p>
+                }
+            </div>
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public List<RadioOption> Options { get; set; } = [];
+
+    [Parameter]
+    public string Value { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback<string> ValueChanged { get; set; }
+
+    [Parameter]
+    public WaxRadioOrientation Orientation { get; set; } = WaxRadioOrientation.Vertical;
+
+    private async Task Select(RadioOption opt)
+    {
+        if (opt.Disabled) return;
+        Value = opt.Value;
+        await ValueChanged.InvokeAsync(opt.Value);
+    }
+
+    private string GetContainerClass() =>
+        Cn.Of("gap-3", Orientation == WaxRadioOrientation.Horizontal ? "flex flex-wrap" : "flex flex-col", Class).Value;
+
+    private string GetButtonClass(RadioOption opt) =>
+        Cn.Of("flex items-start gap-3 text-left transition-all duration-150 cursor-pointer",
+            opt.Disabled ? "opacity-40 cursor-not-allowed" : null).Value;
+
+    private string GetIndicatorClass(RadioOption opt) =>
+        Cn.Of("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all duration-200",
+            Value == opt.Value
+                ? "border-primary"
+                : "border-border group-hover:border-primary/50"
+        ).Value;
+
+    public record RadioOption(string Label, string Value, string? Description = null, bool Disabled = false);
+}

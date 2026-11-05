@@ -1,0 +1,134 @@
+@using WaxUI.Spoiler
+@using WaxUI.Theme
+@using WaxUI.Utils
+
+@inherits WaxComponent
+
+<span class="@CssClass" style="@RootStyle" @attributes="AdditionalAttributes">
+    @if (Spoiler)
+    {
+        <WaxSpoiler Inline>@ChildContent</WaxSpoiler>
+    }
+    else
+    {
+        @ChildContent
+    }
+</span>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public WaxColor Color { get; set; } = WaxColor.Primary;
+    [Parameter] public WaxBadgeVariant Variant { get; set; } = WaxBadgeVariant.Filled;
+    [Parameter] public WaxBadgeSize Size { get; set; } = WaxBadgeSize.Medium;
+
+    /// <summary>Hides the badge text behind a blur + gradient veil, revealed on click.</summary>
+    [Parameter] public bool Spoiler { get; set; }
+
+    private const string Base = "inline-flex items-center rounded-full font-semibold";
+
+    private static readonly HashSet<string> BuiltInColors =
+        new(StringComparer.Ordinal) { "primary", "secondary", "accent", "muted" };
+
+    private bool UsesBuiltInColor => Color.IsToken && BuiltInColors.Contains(Color.Name);
+
+    private string CssClass =>
+        Cn.Of(Base, SizeClass, (UsesBuiltInColor, VariantClass), Class).Value;
+
+    private string RootStyle => JoinStyles(UsesBuiltInColor ? null : CustomColorStyle, Style);
+
+    private KhamsinClass SizeClass => Kx.Variant(Size,
+        (WaxBadgeSize.Small, "px-2 py-0.5 text-[10px]"),
+        (WaxBadgeSize.Medium, "px-2.5 py-0.5 text-xs"),
+        (WaxBadgeSize.Large, "px-3 py-1 text-sm"));
+
+    private KhamsinClass VariantClass => Variant switch
+    {
+        WaxBadgeVariant.Filled => Kx.Variant(Color.Name,
+            ("primary", "bg-primary text-primary-foreground"),
+            ("secondary", "bg-secondary text-secondary-foreground"),
+            ("accent", "bg-accent text-accent-foreground"),
+            ("muted", "bg-muted text-muted-foreground")),
+        WaxBadgeVariant.Soft => Kx.Variant(Color.Name,
+            ("primary", "bg-primary/15 text-primary"),
+            ("secondary", "bg-secondary/15 text-secondary"),
+            ("accent", "bg-accent/20 text-accent-foreground dark:text-accent"),
+            ("muted", "bg-muted/60 text-muted-foreground")),
+        WaxBadgeVariant.Outlined => Kx.Variant(Color.Name,
+            ("primary", "border border-primary/60 text-primary"),
+            ("secondary", "border border-secondary/60 text-secondary"),
+            ("accent", "border border-accent/60 text-accent-foreground dark:text-accent"),
+            ("muted", "border border-border text-muted-foreground")),
+        _ => throw new ArgumentOutOfRangeException(nameof(Variant)),
+    };
+
+    // Custom colors (extra theme tokens or explicit CSS values) cannot use generated
+    // Khamsin utility classes, so they are applied through inline styles instead.
+    private string CustomColorStyle => Variant switch
+    {
+        WaxBadgeVariant.Filled =>
+            $"background-color: {Color.CssValue}; color: {CustomForeground};",
+        WaxBadgeVariant.Soft =>
+            $"background-color: color-mix(in srgb, {Color.CssValue} 15%, transparent); color: {Color.CssValue};",
+        WaxBadgeVariant.Outlined =>
+            $"border: 1px solid color-mix(in srgb, {Color.CssValue} 60%, transparent); color: {Color.CssValue};",
+        _ => throw new ArgumentOutOfRangeException(nameof(Variant)),
+    };
+
+    // Theme tokens can supply --{token}-foreground; explicit colors get black or white
+    // based on their perceptual luminance.
+    private string CustomForeground => Color.Value is not null
+        ? ContrastText(Color.Value)
+        : $"var(--{Color.Name}-foreground, #FFFFFF)";
+
+    private static string JoinStyles(params string?[] styles) =>
+        string.Join(" ", styles.Where(style => !string.IsNullOrWhiteSpace(style)));
+
+    private static string ContrastText(string cssColor)
+    {
+        if (!TryParseHex(cssColor, out var red, out var green, out var blue))
+        {
+            return "#FFFFFF";
+        }
+
+        static double ToLinear(int channel)
+        {
+            var value = channel / 255.0;
+            return value <= 0.04045
+                ? value / 12.92
+                : Math.Pow((value + 0.055) / 1.055, 2.4);
+        }
+
+        var luminance = 0.2126 * ToLinear(red) + 0.7152 * ToLinear(green) + 0.0722 * ToLinear(blue);
+
+        return luminance > 0.179 ? "#000000" : "#FFFFFF";
+    }
+
+    /// <summary>Parses #RGB, #RGBA, #RRGGBB and #RRGGBBAA values for contrast calculation.</summary>
+    private static bool TryParseHex(string cssColor, out int red, out int green, out int blue)
+    {
+        red = green = blue = 0;
+
+        var raw = cssColor.Trim();
+        if (!raw.StartsWith('#'))
+        {
+            return false;
+        }
+
+        raw = raw[1..];
+        if (raw.Length is 3 or 4)
+        {
+            raw = string.Concat(raw.Select(character => new string(character, 2)));
+        }
+
+        if (raw.Length is not (6 or 8) || !raw.All(char.IsAsciiHexDigit))
+        {
+            return false;
+        }
+
+        red = Convert.ToInt32(raw[..2], 16);
+        green = Convert.ToInt32(raw.Substring(2, 2), 16);
+        blue = Convert.ToInt32(raw.Substring(4, 2), 16);
+
+        return true;
+    }
+}

@@ -1,0 +1,76 @@
+﻿@using LucideBlazor
+@using WaxUI.Spoiler
+@using WaxUI.Utils
+
+@inherits WaxComponent
+
+<button type="button"
+        class="@CssClass"
+        style="@Style"
+        @attributes="AdditionalAttributes"
+        @onclick="Toggle">
+    <span>@Emoji</span>
+    @if (Spoiler)
+    {
+        <span class="@SpoilerWrapperClass">
+            <span class="@SpoilerContentClass">@Count</span>
+            <span class="@SpoilerVeilClass" aria-hidden="true">
+                <LucideIcon Name="eye" Size="11" ClassName="@WaxSpoilerStyles.Hint.Value"/>
+            </span>
+        </span>
+    }
+    else
+    {
+        <span class="font-mono">@Count</span>
+    }
+</button>
+
+@code {
+    [Parameter] public string Emoji { get; set; } = string.Empty;
+    [Parameter] public int Count { get; set; }
+    [Parameter] public bool Value { get; set; }
+    [Parameter] public EventCallback<bool> ValueChanged { get; set; }
+    [Parameter] public EventCallback<bool> OnToggle { get; set; }
+
+    /// <summary>Hides the reaction count behind a blur + gradient veil. The first click reveals it instead of reacting.</summary>
+    [Parameter] public bool Spoiler { get; set; }
+
+    private bool _spoilerRevealed;
+
+    private static readonly KhamsinClass Base = Cn.Of(
+        "inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-all duration-200 active:scale-95");
+
+    private KhamsinClass ValueClass => Cn.Of(Value
+        ? "border-primary/30 bg-primary/10 text-primary hover:border-primary/40"
+        : "border-border bg-background text-muted-foreground hover:border-primary/30 hover:text-foreground");
+
+    private string SpoilerWrapperClass => Cn.Of(
+        WaxSpoilerStyles.Wrapper,
+        "inline-block",
+        (!_spoilerRevealed, WaxSpoilerStyles.Hidden)).Value;
+
+    private string SpoilerContentClass => Cn.Of(
+        "inline font-mono",
+        WaxSpoilerStyles.Content,
+        (!_spoilerRevealed, WaxSpoilerStyles.ContentBlurred)).Value;
+
+    private string SpoilerVeilClass => Cn.Of(
+        WaxSpoilerStyles.Veil,
+        _spoilerRevealed ? WaxSpoilerStyles.VeilHidden : WaxSpoilerStyles.VeilVisible).Value;
+
+    private string CssClass => Cn.Of(Base, ValueClass, Class).Value;
+
+    private async Task Toggle()
+    {
+        if (Spoiler && !_spoilerRevealed)
+        {
+            _spoilerRevealed = true;
+            return;
+        }
+
+        Value = !Value;
+
+        await ValueChanged.InvokeAsync(Value);
+        await OnToggle.InvokeAsync(Value);
+    }
+}

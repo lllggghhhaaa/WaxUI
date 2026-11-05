@@ -1,9 +1,9 @@
-# WaxComponents
+# WaxUI
 
-A UI component library for Blazor, built with Tailwind CSS and light/dark mode support.
+A UI component library for Blazor, styled with Khamsin utility CSS and light/dark mode support.
 
-- NuGet: [https://www.nuget.org/packages/WaxComponents](https://www.nuget.org/packages/WaxComponents)
-- Source: [https://github.com/lllggghhhaaa/WaxComponents](https://github.com/lllggghhhaaa/WaxComponents)
+- NuGet: [https://www.nuget.org/packages/WaxUI](https://www.nuget.org/packages/WaxUI)
+- Source: [https://github.com/lllggghhhaaa/WaxUI](https://github.com/lllggghhhaaa/WaxUI)
 - License: Apache-2.0
 - Target: .NET 11.0
 
@@ -12,7 +12,7 @@ Components: Accordion, Alert, Avatar, Badge, Breadcrumb, Button, Card, Checkbox,
 ## Install
 
 ```bash
-dotnet add package WaxComponents
+dotnet add package WaxUI
 ```
 
 ## Setup
@@ -20,16 +20,25 @@ dotnet add package WaxComponents
 Register the services in `Program.cs`:
 
 ```csharp
-builder.Services.AddWaxComponents();
+builder.Services.AddWaxUI();
 ```
 
-Add the stylesheet and theme support to `App.razor`:
+Add Khamsin to projects that write utility classes, then link the generated stylesheet and theme
+support in `App.razor`:
+
+```bash
+dotnet add package Khamsin --version 0.3.0
+```
 
 ```razor
-<link rel="stylesheet" href="_content/WaxComponents/app.css" />
+<link rel="stylesheet" href="khamsin.css" />
 <FontMap />
 <ThemePreloader />
 ```
+
+`khamsin.css` contains the theme, Khamsin's preflight, WaxUI's base styles and only the
+utilities the app renders. Blazor Server apps can serve it from an endpoint instead with
+`app.MapKhamsinCss()`.
 
 ## Usage
 

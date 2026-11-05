@@ -1,0 +1,63 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@using LucideBlazor
+@using WaxUI.Badge
+@using WaxUI.Card
+@using WaxUI.Theme
+
+<PageTitle>WaxUI</PageTitle>
+
+<div class="max-w-2xl">
+    <div class="flex items-center gap-3 mb-4">
+        <div class="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center">
+            <LucideIcon Name="coffee" Size="24" ClassName="text-primary-foreground" />
+        </div>
+        <div>
+            <h1 class="text-4xl font-display font-bold text-foreground">WaxUI</h1>
+            <p class="text-muted-foreground">A Blazor component library</p>
+        </div>
+    </div>
+
+    <p class="text-lg text-muted-foreground mb-8">
+        A collection of beautiful, reusable UI components for Blazor, styled with Khamsin.
+    </p>
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
+    <WaxCard Variant="WaxCardVariant.Outlined" Class="hover:shadow-md transition-shadow">
+        <a href="/getting-started" class="no-underline">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+                    <LucideIcon Name="book-open" Size="20" ClassName="text-primary" />
+                </div>
+                <h3 class="font-semibold text-foreground">Getting Started</h3>
+            </div>
+            <p class="text-sm text-muted-foreground">Installation, setup, and basic usage guide.</p>
+        </a>
+    </WaxCard>
+
+    <WaxCard Variant="WaxCardVariant.Outlined" Class="hover:shadow-md transition-shadow">
+        <a href="/component/button" class="no-underline">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+                    <LucideIcon Name="square" Size="20" ClassName="text-primary" />
+                </div>
+                <h3 class="font-semibold text-foreground">Components</h3>
+            </div>
+            <p class="text-sm text-muted-foreground">Explore all available components and their APIs.</p>
+        </a>
+    </WaxCard>
+
+    <WaxCard Variant="WaxCardVariant.Outlined" Class="hover:shadow-md transition-shadow">
+        <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+                <LucideIcon Name="package" Size="20" ClassName="text-primary" />
+            </div>
+            <h3 class="font-semibold text-foreground">NuGet</h3>
+        </div>
+        <p class="text-sm text-muted-foreground mb-3">
+            <code class="bg-muted px-2 py-0.5 rounded text-xs">dotnet add package WaxUI</code>
+        </p>
+        <WaxBadge Color="WaxColor.Muted">v1.0.0</WaxBadge>
+    </WaxCard>
+</div>
