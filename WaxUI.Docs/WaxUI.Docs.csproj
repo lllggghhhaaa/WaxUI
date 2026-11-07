@@ -20,7 +20,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Khamsin" Version="0.3.3" />
+      <PackageReference Include="Khamsin" Version="0.3.4" />
     </ItemGroup>
 
 
