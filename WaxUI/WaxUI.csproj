@@ -12,7 +12,7 @@
         <RepositoryType>git</RepositoryType>
         <PackageTags>blazor</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-        <PackageVersion>1.1.0</PackageVersion>
+        <PackageVersion>1.1.2</PackageVersion>
         <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\'))</RepoRoot>
     </PropertyGroup>
 
@@ -59,7 +59,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Khamsin" Version="0.3.4" />
+        <PackageReference Include="Khamsin" Version="0.3.5" />
         <PackageReference Include="LucideBlazor" Version="1.0.7" />
         <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="11.0.0-rc.1.26425.128" />
     </ItemGroup>

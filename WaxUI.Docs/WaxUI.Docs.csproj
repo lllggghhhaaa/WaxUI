@@ -11,20 +11,14 @@
         <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../'))</RepoRoot>
     </PropertyGroup>
 
-    <ItemGroup>
-      <Content Remove="wwwroot\app.css" />
-    </ItemGroup>
-
     <PropertyGroup>
         <KhamsinRegisterStaticWebAsset>false</KhamsinRegisterStaticWebAsset>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Khamsin" Version="0.3.4" />
+      <PackageReference Include="Khamsin" Version="0.3.5" />
     </ItemGroup>
-
-
-
+    
     <!-- Scan the library's sources so the CSS task extracts classes from Cn.Of/Kx.When calls
          in the library's .razor and .cs files, not just from the compiled manifests. -->
     <Target Name="KhamsinScanLibrarySources" BeforeTargets="KhamsinPrepareSources">
@@ -39,6 +33,5 @@
     <ItemGroup>
       <ProjectReference Include="..\WaxUI\WaxUI.csproj" />
     </ItemGroup>
-
-
+    
 </Project>
