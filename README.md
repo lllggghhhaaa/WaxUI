@@ -85,3 +85,58 @@ Inject `IThemeService` to change the theme at runtime:
 ```
 
 Modes: `ThemeMode.System`, `ThemeMode.Light`, `ThemeMode.Dark`.
+
+## Runtime services
+
+`AddWaxUI()` registers scoped services for UI that lives outside the component that
+opens it. The overlay services need their outlet rendered once in the interactive
+layout; `ThemePreloader` belongs in the document head.
+
+| Service | Host | Purpose |
+| --- | --- | --- |
+| `IThemeService` | `ThemePreloader` | Read/toggle the current light/dark/system theme. |
+| `IWaxDialogService` | `WaxDialogOutlet` | Await typed dialog, confirm and prompt results. |
+| `IWaxAlertService` | `WaxAlertOutlet` | Transient or persistent stacked alerts/toasts. |
+| `IWaxPopoverService` | `WaxPopoverOutlet` | Anchored popovers opened from code or a selector. |
+| `IWaxMenuService` | `WaxMenuOutlet` | Context menus that complete with the selected row. |
+
+```razor
+<WaxDialogOutlet @rendermode="InteractiveServer" />
+<WaxAlertOutlet @rendermode="InteractiveServer" />
+<WaxPopoverOutlet @rendermode="InteractiveServer" />
+<WaxMenuOutlet @rendermode="InteractiveServer" />
+```
+
+```csharp
+@inject IWaxAlertService Alerts
+
+Alerts.Success("Your changes have been saved.");
+Alerts.Error("The upload failed. Please try again.");
+```
+
+```csharp
+@inject IWaxPopoverService Popovers
+
+private ElementReference _anchor;
+
+private Task OpenAsync() => Popovers.ShowAsync(
+    _anchor,
+    @<div class="w-64 p-3">Anchored content</div>,
+    new WaxPopoverOptions { ShowArrow = true });
+```
+
+```csharp
+@inject IWaxMenuService Menus
+
+private async Task OpenMenuAsync(MouseEventArgs e)
+{
+    var index = await Menus.ShowAsync(new WaxMenuOptions
+    {
+        HeaderLabel = "design-team",
+        HeaderKind = "channel",
+        Items = [new("Copy link", "link"), new("Delete", "trash-2", danger: true)],
+    }, e);
+
+    // index: selected row, or null when dismissed
+}
+```

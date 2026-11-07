@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using WaxUI.Services;
 
 namespace WaxUI.Dialog;
 
@@ -9,21 +10,15 @@ namespace WaxUI.Dialog;
 /// </summary>
 public sealed class WaxDialogService : IWaxDialogService
 {
-    private readonly List<WaxDialogInstance> _dialogs = [];
-    private readonly Lock _gate = new();
+    private readonly WaxInstanceStore<WaxDialogInstance> _dialogs = new();
 
-    public event Action? Changed;
-
-    public IReadOnlyList<WaxDialogInstance> OpenDialogs
+    public event Action? Changed
     {
-        get
-        {
-            lock (_gate)
-            {
-                return _dialogs.ToArray();
-            }
-        }
+        add => _dialogs.Changed += value;
+        remove => _dialogs.Changed -= value;
     }
+
+    public IReadOnlyList<WaxDialogInstance> OpenDialogs => _dialogs.Items;
 
     public Task<WaxDialogResult<T>> ShowAsync<T>(
         RenderFragment<WaxDialogContext<T>> content,
@@ -85,10 +80,10 @@ public sealed class WaxDialogService : IWaxDialogService
 
     public void CloseAll()
     {
-        WaxDialogInstance[] snapshot;
-        lock (_gate) snapshot = [.. _dialogs];
-
-        foreach (var dialog in snapshot) dialog.Cancel();
+        foreach (var dialog in _dialogs.Items)
+        {
+            dialog.Cancel();
+        }
     }
 
     private static RenderFragment<WaxDialogContext<T>> EmptyContent<T>() => _ => _ => { };
@@ -126,9 +121,7 @@ public sealed class WaxDialogService : IWaxDialogService
 
         var instance = new WaxDialogInstance(effectiveOptions, body, context.Cancel, confirm);
 
-        lock (_gate) _dialogs.Add(instance);
-
-        Changed?.Invoke();
+        _dialogs.Add(instance);
         _ = RemoveWhenResolvedAsync(context, instance);
 
         return context.Task;
@@ -137,10 +130,7 @@ public sealed class WaxDialogService : IWaxDialogService
     private async Task RemoveWhenResolvedAsync<T>(WaxDialogContext<T> context, WaxDialogInstance instance)
     {
         await context.Task;
-
-        lock (_gate) _dialogs.Remove(instance);
-
-        Changed?.Invoke();
+        _dialogs.Remove(instance);
     }
 
     private static RenderFragment BuildFragmentBody<T>(

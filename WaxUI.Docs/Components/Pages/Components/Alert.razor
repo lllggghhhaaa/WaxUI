@@ -3,12 +3,13 @@
 @using WaxUI.Alert
 @using WaxUI.Button
 @using WaxUI.Tabs
+@inject IWaxAlertService Alerts
 
 <PageTitle>Alert - WaxUI</PageTitle>
 
 <div class="mb-8">
     <h1 class="text-3xl font-display font-bold text-foreground mb-2">Alert</h1>
-    <p class="text-muted-foreground">Inline messages for feedback, warnings, and status updates.</p>
+    <p class="text-muted-foreground">Inline messages for feedback, warnings, and status updates. The alert service adds transient, stacked notifications through a <code>WaxAlertOutlet</code>.</p>
 </div>
 
 <div class="space-y-6">
@@ -30,6 +31,12 @@
     <div class="p-6 rounded-3xl bg-card border border-border">
         <h3 class="font-semibold text-foreground mb-1">Spoiler</h3>
         <WaxTab Variant="WaxTabVariant.Primary" Tabs="_spoilerTabs" TabListClass="mb-4" />
+    </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h3 class="font-semibold text-foreground mb-1">From Code (Service)</h3>
+        <p class="mb-3 text-[13px] text-muted-foreground">IWaxAlertService shows transient or persistent alerts from anywhere in the interactive tree. Alerts auto-dismiss after five seconds unless a different duration (or null) is set. Requires a WaxAlertOutlet in the layout.</p>
+        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_serviceTabs" TabListClass="mb-4" />
     </div>
 </div>
 
@@ -80,6 +87,38 @@
         new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_spoilerCode</code></pre>, Icon: "code")
     ];
 
+    private List<WaxTabItem> _serviceTabs = [];
+
+    protected override void OnInitialized()
+    {
+        _serviceTabs =
+        [
+            new("Preview", Content: @<div class="space-y-3">
+                <div class="flex flex-wrap gap-2">
+                    <WaxButton Variant="WaxButtonVariant.Outlined" OnClick="ShowSuccess">Success</WaxButton>
+                    <WaxButton Variant="WaxButtonVariant.Outlined" OnClick="ShowError">Error</WaxButton>
+                    <WaxButton Variant="WaxButtonVariant.Tonal" OnClick="ShowPersistent">Persistent warning</WaxButton>
+                    <WaxButton Variant="WaxButtonVariant.Text" OnClick="ClearAlerts">Clear all</WaxButton>
+                </div>
+                <p class="mb-0 text-sm text-muted-foreground">Alerts stack in the outlet — try opening several at once.</p>
+            </div>, Icon: "monitor-dot"),
+            new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_serviceCode</code></pre>, Icon: "code")
+        ];
+    }
+
+    private void ShowSuccess() => Alerts.Success("Your changes have been saved.");
+
+    private void ShowError() => Alerts.Error("The upload failed. Please try again.");
+
+    private void ShowPersistent() => Alerts.Show(new WaxAlertOptions
+    {
+        Severity = WaxAlertSeverity.Warning,
+        Message = "Your session expires in 5 minutes.",
+        Duration = null,
+    });
+
+    private void ClearAlerts() => Alerts.Clear();
+
     private static string _severityCode = """
         @using WaxUI.Alert
 
@@ -113,5 +152,29 @@
 
         <WaxAlert Severity="WaxAlertSeverity.Warning" Message="Your temporary password is wax-7f3k-99dx." Spoiler="true" />
         <WaxAlert Severity="WaxAlertSeverity.Info" Message="The migration finished at 03:14 with 0 errors." Spoiler="true" />
+        """;
+
+    private static string _serviceCode = """
+        @using WaxUI.Alert
+        @inject IWaxAlertService Alerts
+
+        <WaxButton OnClick="ShowSuccess">Success</WaxButton>
+        <WaxButton OnClick="ShowError">Error</WaxButton>
+
+        @code {
+            private void ShowSuccess() =>
+                Alerts.Success("Your changes have been saved.");
+
+            private void ShowError() =>
+                Alerts.Error("The upload failed. Please try again.");
+
+            private void ShowPersistent() =>
+                Alerts.Show(new WaxAlertOptions
+                {
+                    Severity = WaxAlertSeverity.Warning,
+                    Message = "Your session expires in 5 minutes.",
+                    Duration = null, // keep open until dismissed
+                });
+        }
         """;
 }

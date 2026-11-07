@@ -2,12 +2,13 @@
 @rendermode InteractiveServer
 @using WaxUI.Menu
 @using WaxUI.Tabs
+@inject IWaxMenuService Menus
 
 <PageTitle>Menu - WaxUI</PageTitle>
 
 <div class="mb-8">
     <h1 class="text-3xl font-display font-bold text-foreground mb-2">Menu</h1>
-    <p class="text-muted-foreground">Floating context menus with icons, shortcuts, destructive rows, and an optional slider.</p>
+    <p class="text-muted-foreground">Floating context menus with icons, shortcuts, destructive rows, and an optional slider. The menu service opens one imperatively and awaits the selected row.</p>
 </div>
 
 <div class="space-y-6">
@@ -19,6 +20,12 @@
     <div class="p-6 rounded-3xl bg-card border border-border">
         <h3 class="font-semibold text-foreground mb-1">Inline Slider</h3>
         <WaxTab Variant="WaxTabVariant.Primary" Tabs="_sliderTabs" TabListClass="mb-4" />
+    </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h3 class="font-semibold text-foreground mb-1">From Code (Service)</h3>
+        <p class="mb-3 text-[13px] text-muted-foreground">IWaxMenuService opens a context menu and completes with the selected index, or null when dismissed. Requires a WaxMenuOutlet in the layout.</p>
+        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_serviceTabs" TabListClass="mb-4" />
     </div>
 </div>
 
@@ -49,6 +56,7 @@
 
     private List<WaxTabItem> _contextTabs = [];
     private List<WaxTabItem> _sliderTabs = [];
+    private List<WaxTabItem> _serviceTabs = [];
 
     protected override void OnInitialized()
     {
@@ -110,6 +118,35 @@
             </div>, Icon: "monitor-dot"),
             new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_sliderCode</code></pre>, Icon: "code")
         ];
+
+        _serviceTabs =
+        [
+            new("Preview", Content: @<div class="space-y-3">
+                <button type="button"
+                        class="w-full max-w-sm cursor-context-menu rounded-2xl border border-dashed border-border bg-muted/40 px-4 py-6 text-sm text-muted-foreground"
+                        @onclick="OpenServiceMenu"
+                        @oncontextmenu="OpenServiceMenu"
+                        @oncontextmenu:preventDefault>
+                    Click or right-click — opened by the service
+                </button>
+                <p class="text-sm text-muted-foreground">
+                    Last action: <span class="font-medium text-foreground">@(_lastAction ?? "None")</span>
+                </p>
+            </div>, Icon: "monitor-dot"),
+            new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_serviceCode</code></pre>, Icon: "code")
+        ];
+    }
+
+    private async Task OpenServiceMenu(MouseEventArgs e)
+    {
+        var selected = await Menus.ShowAsync(new WaxMenuOptions
+        {
+            HeaderLabel = "design-team",
+            HeaderKind = "channel",
+            Items = _items,
+        }, e);
+
+        _lastAction = selected is null ? "Menu dismissed" : _items[selected.Value].Label;
     }
 
     private void OpenMenu(MouseEventArgs e)
@@ -255,6 +292,35 @@
 
             private void OnItemClicked(int index) => _menuOpen = false;
             private void CloseMenu() => _menuOpen = false;
+        }
+        """;
+
+    private static string _serviceCode = """
+        @using WaxUI.Menu
+        @inject IWaxMenuService Menus
+
+        <button type="button" @onclick="OpenMenu" @oncontextmenu="OpenMenu" @oncontextmenu:preventDefault>
+            Open context menu
+        </button>
+
+        @code {
+            private readonly WaxMenuItem[] _items =
+            [
+                new("Copy link", "link", shortcut: "Ctrl+C"),
+                new("Delete", "trash-2", danger: true),
+            ];
+
+            private async Task OpenMenu(MouseEventArgs e)
+            {
+                var index = await Menus.ShowAsync(new WaxMenuOptions
+                {
+                    HeaderLabel = "design-team",
+                    HeaderKind = "channel",
+                    Items = _items,
+                }, e);
+
+                // index is the selected row, or null when dismissed
+            }
         }
         """;
 }

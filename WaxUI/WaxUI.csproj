@@ -12,15 +12,12 @@
         <RepositoryType>git</RepositoryType>
         <PackageTags>blazor</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-        <PackageVersion>1.0.0</PackageVersion>
+        <PackageVersion>1.1.0</PackageVersion>
         <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\'))</RepoRoot>
     </PropertyGroup>
 
     <ItemGroup>
         <None Include="../README.md" Pack="true" PackagePath="" />
-        <PackageReference Include="Khamsin" Version="0.3.0" />
-        <!-- Project configuration, not consumer content. khamsin.json is embedded in the assembly. -->
-        <Content Remove="khamsin.json" />
         <Content Remove="package.json" />
         <Content Remove="tsconfig.json" />
     </ItemGroup>
@@ -32,16 +29,19 @@
     </Target>
 
 
-    <!-- TypeScript pipeline. Sources in Scripts/, compiled by esbuild: theme.js (ES module
-         used by ThemeService), colorPicker.js (ES module used by WaxColorPickerJs),
-         dialog.js (ES module used by WaxDialogJs), popover.js (ES module used by
-         WaxPopoverJs), dropzone.js (ES module used by WaxDropJs) and
+    <!-- TypeScript pipeline. Sources in Scripts/, compiled by esbuild: theme.g.js (ES module
+         used by ThemeService), colorPicker.g.js, dialog.g.js, popover.g.js and dropzone.g.js
+         (ES modules loaded through WaxModulePaths/WaxJsModule) and
          ThemePreloaderScript.generated.cs (inline <head> script const rendered by
          ThemePreloader.razor, kept inline to avoid a theme flash). -->
     <Target Name="BuildScripts" BeforeTargets="BeforeBuild" DependsOnTargets="NpmInstall">
         <Exec Command="npm run build:js" Condition="'$(Configuration)' != 'Release'" />
         <Exec Command="npm run build:js:min" Condition="'$(Configuration)' == 'Release'" />
         <ItemGroup>
+            <!-- Generated modules are ignored by git, so a clean checkout has no evaluation-time
+                 glob for them. Add them before static web assets are discovered. -->
+            <Content Remove="wwwroot/js/*.g.js" />
+            <Content Include="wwwroot/js/*.g.js" />
             <!-- Remove+Include so an evaluation-time glob of the generated file is not compiled twice. -->
             <Compile Remove="Services\Theme\ThemePreloaderScript.generated.cs" />
             <Compile Include="Services\Theme\ThemePreloaderScript.generated.cs" />
@@ -59,8 +59,13 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="Khamsin" Version="0.3.3" />
         <PackageReference Include="LucideBlazor" Version="1.0.7" />
         <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="11.0.0-rc.1.26425.128" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="wwwroot\js\" />
     </ItemGroup>
 
 

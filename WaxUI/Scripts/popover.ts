@@ -1,12 +1,16 @@
 // Browser helpers for WaxPopover: viewport-aware floating positioning (flip + shift),
 // trigger interaction listeners, and outside click / Escape / scroll bridging back to
-// Blazor. Imported by WaxPopoverJs (./_content/WaxUI/js/popover.js).
+// Blazor. Imported through WaxJsModule (./_content/WaxUI/js/popover.g.js).
 //
-// `sync` is the single entry point the component calls after every render. It
+// `sync` is the entry point the WaxPopover component calls after every render. It
 // reconciles listeners against the requested state and, while open, positions the
 // panel and returns the placement that ended up applied (which may have flipped);
 // Blazor uses that to render the matching arrow. Scroll/resize repositioning happens
 // here without a .NET roundtrip; a scroll-driven flip notifies Blazor once.
+//
+// `attachAnchored` / `detachAnchored` provide the same positioning and dismissal
+// behaviour for popovers opened through IWaxPopoverService, whose panel lives in
+// WaxPopoverOutlet instead of next to its trigger in the component tree.
 
 interface WaxPopoverCallback {
     invokeMethodAsync(methodName: string, ...args: unknown[]): Promise<void>;
@@ -161,17 +165,21 @@ function fitsOnSide(side: Side, rect: DOMRect, pw: number, ph: number, offset: n
     }
 }
 
-function applyPosition(state: PopoverState): string {
-    const { triggerEl, panel, arrow, opts } = state;
-    const rect = triggerEl.getBoundingClientRect();
+function position(
+    anchor: HTMLElement,
+    panel: HTMLElement,
+    arrow: HTMLElement | null,
+    placement: string,
+    offset: number,
+): string {
+    const rect = anchor.getBoundingClientRect();
     const pw = panel.offsetWidth;
     const ph = panel.offsetHeight;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const m = VIEWPORT_MARGIN;
-    const offset = opts.offset;
 
-    const [sideToken, alignToken] = opts.placement.split("-");
+    const [sideToken, alignToken] = placement.split("-");
     let side: Side = sideToken as Side;
     const align = alignToken ?? "center";
 
@@ -246,6 +254,10 @@ function applyPosition(state: PopoverState): string {
     return align === "center" ? side : `${side}-${align}`;
 }
 
+function applyPosition(state: PopoverState): string {
+    return position(state.triggerEl, state.panel, state.arrow, state.opts.placement, state.opts.offset);
+}
+
 // Reconciles the popover's browser-side state with what Blazor rendered. Idempotent:
 /// safe to call after every render. Returns the applied placement while open.
 export function sync(
@@ -299,4 +311,112 @@ export function detach(panel: HTMLElement): void {
     unbindFloating(state);
     for (const remove of state.triggerRemovers) remove();
     states.delete(panel);
+}
+
+/* ---- Service-driven popovers (WaxPopoverOutlet) --------------------------------
+ *
+ * The outlet renders the panel with position:fixed and hands the anchor element (or
+ * a CSS selector) to `attachAnchored`. The same flip/shift math as the declarative
+ * component positions it; outside pointer presses and Escape are bridged back to the
+ * per-popover Blazor host, which closes its own instance.
+ */
+
+export interface WaxAnchoredPopoverOptions {
+    placement: string;
+    offset: number;
+    closeOnOutsideClick: boolean;
+    closeOnEscape: boolean;
+}
+
+interface AnchoredPopoverState {
+    anchor: HTMLElement;
+    panel: HTMLElement;
+    arrow: HTMLElement | null;
+    dotnet: WaxPopoverCallback;
+    opts: WaxAnchoredPopoverOptions;
+    applied: string | null;
+    removers: (() => void)[];
+}
+
+const anchoredStates = new WeakMap<HTMLElement, AnchoredPopoverState>();
+
+function applyAnchoredPosition(state: AnchoredPopoverState): string {
+    return position(state.anchor, state.panel, state.arrow, state.opts.placement, state.opts.offset);
+}
+
+export function attachAnchored(
+    anchor: HTMLElement | string,
+    panel: HTMLElement,
+    arrow: HTMLElement | null,
+    dotnet: WaxPopoverCallback,
+    options: WaxAnchoredPopoverOptions,
+): string | null {
+    const anchorEl = typeof anchor === "string"
+        ? document.querySelector<HTMLElement>(anchor)
+        : anchor;
+
+    if (!anchorEl) {
+        return null;
+    }
+
+    let state = anchoredStates.get(panel);
+    if (!state) {
+        const removers: (() => void)[] = [];
+        const created: AnchoredPopoverState = {
+            anchor: anchorEl,
+            panel,
+            arrow,
+            dotnet,
+            opts: options,
+            applied: null,
+            removers,
+        };
+        state = created;
+        anchoredStates.set(panel, created);
+
+        on(document, "pointerdown", (e) => {
+            if (!created.opts.closeOnOutsideClick) return;
+
+            const target = e.target;
+            if (target instanceof Node && !panel.contains(target) && !created.anchor.contains(target)) {
+                void created.dotnet.invokeMethodAsync("OnWaxPopoverServiceOutside");
+            }
+        }, removers);
+
+        on(document, "keydown", (e: KeyboardEvent) => {
+            if (e.key === "Escape" && created.opts.closeOnEscape) {
+                void created.dotnet.invokeMethodAsync("OnWaxPopoverServiceEscape");
+            }
+        }, removers);
+
+        const reposition = (): void => {
+            const applied = applyAnchoredPosition(created);
+            if (applied !== created.applied) {
+                created.applied = applied;
+                void created.dotnet.invokeMethodAsync("OnWaxPopoverServicePlacement", applied);
+            }
+        };
+
+        // Capture phase: scroll events don't bubble, so nested scroll containers keep
+        // the panel glued to its anchor.
+        on(window, "scroll", reposition, removers, true);
+        on(window, "resize", reposition, removers);
+    } else {
+        state.anchor = anchorEl;
+        state.arrow = arrow;
+        state.dotnet = dotnet;
+        state.opts = options;
+    }
+
+    const applied = applyAnchoredPosition(state);
+    state.applied = applied;
+    return applied;
+}
+
+export function detachAnchored(panel: HTMLElement): void {
+    const state = anchoredStates.get(panel);
+    if (!state) return;
+
+    for (const remove of state.removers) remove();
+    anchoredStates.delete(panel);
 }

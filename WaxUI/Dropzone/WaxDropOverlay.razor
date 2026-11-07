@@ -1,6 +1,7 @@
 @using LucideBlazor
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.JSInterop
+@using WaxUI.Services
 @using WaxUI.Utils
 
 @inherits WaxComponent
@@ -28,7 +29,7 @@
 
 @code {
     private ElementReference _rootRef;
-    private WaxDropJs? _jsInterop;
+    private WaxJsModule? _jsInterop;
     private DotNetObjectReference<WaxDropOverlay>? _selfRef;
     private WaxDropScope? _attachedScope;
     private bool _dragging;
@@ -121,7 +122,7 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        _jsInterop ??= new WaxDropJs(Js);
+        _jsInterop ??= new WaxJsModule(Js, WaxModulePaths.Dropzone);
 
         // Reattach when the scope changes or AutoShow is toggled.
         var scope = AutoShow ? Scope : (WaxDropScope?)null;

@@ -1,5 +1,6 @@
 @using WaxUI.Card
 @using WaxUI.Button
+@using WaxUI.Services
 @using WaxUI.Utils
 @using Microsoft.JSInterop
 @inherits WaxComponent
@@ -114,7 +115,7 @@
 
     private ElementReference _dialog;
 
-    private WaxDialogJs? _jsInterop;
+    private WaxJsModule? _jsInterop;
 
     private DotNetObjectReference<WaxDialog>? _selfRef;
 
@@ -148,7 +149,7 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        _jsInterop ??= new WaxDialogJs(Js);
+        _jsInterop ??= new WaxJsModule(Js, WaxModulePaths.Dialog);
 
         try
         {

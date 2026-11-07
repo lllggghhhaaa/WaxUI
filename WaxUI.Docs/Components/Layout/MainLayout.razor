@@ -1,4 +1,7 @@
-﻿@using WaxUI.Dialog
+﻿@using WaxUI.Alert
+@using WaxUI.Dialog
+@using WaxUI.Menu
+@using WaxUI.Popover
 @inherits LayoutComponentBase
 
 <div class="page">
@@ -18,3 +21,6 @@
 </div>
 
 <WaxDialogOutlet @rendermode="InteractiveServer" />
+<WaxAlertOutlet @rendermode="InteractiveServer" />
+<WaxPopoverOutlet @rendermode="InteractiveServer" />
+<WaxMenuOutlet @rendermode="InteractiveServer" />

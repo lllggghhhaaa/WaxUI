@@ -1,6 +1,6 @@
 /* WaxDropzone / WaxDropOverlay browser support module.
  *
- * Loaded lazily by WaxDropJs as ./_content/WaxUI/js/dropzone.js.
+ * Loaded lazily through WaxModulePaths.Dropzone as ./_content/WaxUI/js/dropzone.g.js.
  *
  * Blazor drag events never expose the dropped files, so the module owns the drag/drop
  * listeners and hands dropped files to Blazor's <InputFile> by assigning the element's

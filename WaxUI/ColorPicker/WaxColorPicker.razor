@@ -1,6 +1,7 @@
 @using LucideBlazor
 @using Microsoft.JSInterop
 @using WaxUI.IconButton
+@using WaxUI.Services
 @using WaxUI.Slider
 @using WaxUI.Utils
 @implements IAsyncDisposable
@@ -260,7 +261,7 @@
     private double _svTop;
     private double _svWidth = 1;
     private double _svHeight = 1;
-    private WaxColorPickerJs? _jsInterop;
+    private WaxJsModule? _jsInterop;
     private ElementReference _svFieldRef;
     private ElementReference _triggerRef;
     private ElementReference _formatTriggerRef;
@@ -352,7 +353,7 @@
 
     protected override void OnInitialized()
     {
-        _jsInterop = new WaxColorPickerJs(Js);
+        _jsInterop = new WaxJsModule(Js, WaxModulePaths.ColorPicker);
 
         var source = Value ?? DefaultValue;
         var parsed = WaxColorMath.ParseHexColor(source) ?? new WaxColorMath.ParsedHexColor(WaxColorMath.DefaultRgb, null);

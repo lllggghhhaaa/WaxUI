@@ -1,4 +1,5 @@
 @using LucideBlazor
+@using WaxUI.IconButton
 @using WaxUI.Spoiler
 @using WaxUI.Utils
 
@@ -20,6 +21,15 @@
             @ChildContent
         }
     </div>
+    @if (Dismissible)
+    {
+        <WaxIconButton Size="WaxIconButtonSize.XSmall"
+                       Title="Dismiss"
+                       Class="absolute right-1.5 top-1.5"
+                       OnClick="() => OnDismiss.InvokeAsync()">
+            <LucideIcon Name="x" Size="14"/>
+        </WaxIconButton>
+    }
 </div>
 
 @code {
@@ -37,6 +47,12 @@
     /// <summary>Hides the message (and ChildContent) behind a blur + gradient veil, revealed on click.</summary>
     [Parameter] public bool Spoiler { get; set; }
 
+    /// <summary>Shows a dismiss button in the alert's top-right corner.</summary>
+    [Parameter] public bool Dismissible { get; set; }
+
+    /// <summary>Fires when the dismiss button is clicked; the owner hides the alert.</summary>
+    [Parameter] public EventCallback OnDismiss { get; set; }
+
     private string IconName => Icon ?? Severity switch
     {
         WaxAlertSeverity.Destructive => "circle-alert",
@@ -50,9 +66,10 @@
 
     private string CssClass => Cn.Of(
         Kx.Variant(Severity,
-            (WaxAlertSeverity.Destructive, "flex items-start gap-2 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"),
-            (WaxAlertSeverity.Success, "flex items-start gap-2 rounded-2xl border border-secondary/35 bg-secondary/15 px-4 py-3 text-sm text-secondary"),
-            (WaxAlertSeverity.Info, "flex items-start gap-2 rounded-2xl border border-border bg-muted/50 px-4 py-3 text-sm text-foreground"),
-            (WaxAlertSeverity.Warning, "flex items-start gap-2 rounded-2xl border border-accent/40 bg-accent/10 px-4 py-3 text-sm text-accent-foreground")),
+            (WaxAlertSeverity.Destructive, "relative flex items-start gap-2 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"),
+            (WaxAlertSeverity.Success, "relative flex items-start gap-2 rounded-2xl border border-secondary/35 bg-secondary/15 px-4 py-3 text-sm text-secondary"),
+            (WaxAlertSeverity.Info, "relative flex items-start gap-2 rounded-2xl border border-border bg-muted/50 px-4 py-3 text-sm text-foreground"),
+            (WaxAlertSeverity.Warning, "relative flex items-start gap-2 rounded-2xl border border-accent/40 bg-accent/10 px-4 py-3 text-sm text-accent-foreground")),
+        Dismissible ? "pr-10" : null,
         Class).Value;
 }

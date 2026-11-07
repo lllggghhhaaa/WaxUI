@@ -1,6 +1,6 @@
 /* WaxColorPicker browser support module.
  *
- * Loaded lazily by WaxColorPickerJs as ./_content/WaxUI/js/colorPicker.js:
+ * Loaded lazily through WaxModulePaths.ColorPicker (./_content/WaxUI/js/colorPicker.g.js):
  * - beginPointerDrag: captures the pointer so the saturation/value field keeps reporting moves
  *   outside its bounds, and returns the field's rect so the C# side can normalize client coords.
  * - pickColorWithEyedropper: wraps the EyeDropper API (Chromium-only); reports unsupported

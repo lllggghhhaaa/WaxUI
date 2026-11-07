@@ -3,12 +3,13 @@
 @using WaxUI.Popover
 @using WaxUI.Button
 @using WaxUI.Tabs
+@inject IWaxPopoverService Popovers
 
 <PageTitle>Popover - WaxUI</PageTitle>
 
 <div class="mb-8">
     <h1 class="text-3xl font-display font-bold text-foreground mb-2">Popover</h1>
-    <p class="text-muted-foreground">Floating panels anchored to a trigger: twelve placements that flip to stay in view, click/hover/focus/manual triggers, and an optional arrow.</p>
+    <p class="text-muted-foreground">Floating panels anchored to a trigger: twelve placements that flip to stay in view, click/hover/focus/manual triggers, and an optional arrow. The popover service opens the same panels imperatively against any element or selector.</p>
 </div>
 
 <div class="space-y-6">
@@ -31,16 +32,24 @@
         <h3 class="font-semibold text-foreground mb-1">Controlled & arrow</h3>
         <WaxTab Variant="WaxTabVariant.Primary" Tabs="_controlledTabs" TabListClass="mb-4" />
     </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h3 class="font-semibold text-foreground mb-1">From Code (Service)</h3>
+        <p class="mb-3 text-[13px] text-muted-foreground">IWaxPopoverService anchors a panel to an ElementReference or CSS selector, returns a close handle, and reuses the same flip/shift positioning. Requires a WaxPopoverOutlet in the layout.</p>
+        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_serviceTabs" TabListClass="mb-4" />
+    </div>
 </div>
 
 @code {
     private bool _controlledOpen;
     private string? _lastEvent;
+    private ElementReference _serviceAnchor;
 
     private List<WaxTabItem> _basicTabs = [];
     private List<WaxTabItem> _placementTabs = [];
     private List<WaxTabItem> _triggerTabs = [];
     private List<WaxTabItem> _controlledTabs = [];
+    private List<WaxTabItem> _serviceTabs = [];
 
     protected override void OnInitialized()
     {
@@ -153,6 +162,35 @@
             </div>, Icon: "monitor-dot"),
             new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_controlledCode</code></pre>, Icon: "code")
         ];
+
+        _serviceTabs =
+        [
+            new("Preview", Content: @<div class="flex min-h-28 items-center justify-center rounded-2xl border border-dashed border-border bg-muted/30 p-6">
+                <button type="button"
+                        @ref="_serviceAnchor"
+                        class="cursor-pointer rounded-2xl border-2 border-primary bg-transparent px-6 py-2.5 text-base font-medium text-primary transition-all duration-200 hover:bg-primary/10"
+                        @onclick="ShowServicePopover">
+                    Open from service
+                </button>
+            </div>, Icon: "monitor-dot"),
+            new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_serviceCode</code></pre>, Icon: "code")
+        ];
+    }
+
+    private async Task ShowServicePopover()
+    {
+        RenderFragment content = @<div class="w-64 p-3 text-sm text-muted-foreground">
+            Opened imperatively and anchored to the button. Click outside or press Escape to close.
+        </div>;
+
+        await Popovers.ShowAsync(
+            _serviceAnchor,
+            content,
+            new WaxPopoverOptions
+            {
+                Placement = WaxPopoverPlacement.BottomStart,
+                ShowArrow = true,
+            });
     }
 
     private void ToggleControlled() => _controlledOpen = !_controlledOpen;
@@ -257,6 +295,27 @@
             private void ToggleControlled() => _controlledOpen = !_controlledOpen;
             private void OnControlledOpened() => _lastEvent = "Opened";
             private void OnControlledClosed() => _lastEvent = "Closed";
+        }
+        """;
+
+    private static string _serviceCode = """
+        @using WaxUI.Popover
+        @inject IWaxPopoverService Popovers
+
+        <button type="button" @ref="_anchor" @onclick="Open">Open from service</button>
+
+        @code {
+            private ElementReference _anchor;
+
+            private async Task Open()
+            {
+                RenderFragment content = @<div class="w-64 p-3 text-sm">Anchored to the button.</div>;
+
+                await Popovers.ShowAsync(
+                    _anchor,
+                    content,
+                    new WaxPopoverOptions { ShowArrow = true });
+            }
         }
         """;
 }

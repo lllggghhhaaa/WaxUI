@@ -5,7 +5,7 @@ namespace WaxUI.Services.Theme;
 public sealed class ThemeService(IJSRuntime js)
     : IThemeService, IAsyncDisposable
 {
-    private const string ModulePath = "./_content/WaxUI/js/theme.js";
+    private const string ModulePath = WaxModulePaths.Theme;
 
     private readonly SemaphoreSlim _moduleGate = new(1, 1);
     private IJSObjectReference? _module;

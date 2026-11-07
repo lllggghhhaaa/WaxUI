@@ -1,6 +1,7 @@
 @using LucideBlazor
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.JSInterop
+@using WaxUI.Services
 @using WaxUI.Utils
 
 @inherits WaxComponent
@@ -61,7 +62,7 @@
 
 @code {
     private ElementReference _zoneRef;
-    private WaxDropJs? _jsInterop;
+    private WaxJsModule? _jsInterop;
     private DotNetObjectReference<WaxDropzone>? _selfRef;
     private IBrowserFile? _file;
     private string? _error;
@@ -188,7 +189,7 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        _jsInterop ??= new WaxDropJs(Js);
+        _jsInterop ??= new WaxJsModule(Js, WaxModulePaths.Dropzone);
 
         if (Disabled && _attached)
         {
