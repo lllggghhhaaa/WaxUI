@@ -1,0 +1,47 @@
+@implements IDisposable
+@inject IWaxMenuService Menus
+
+@* Renders the context menus opened through IWaxMenuService. Place once in the
+   interactive layout/page. *@
+
+@foreach (var menu in Menus.OpenMenus)
+{
+    var current = menu;
+
+    <WaxMenu @key="current"
+             X="@current.X"
+             Y="@current.Y"
+             HeaderLabel="@current.Options.HeaderLabel"
+             HeaderKind="@current.Options.HeaderKind"
+             Items="@current.Options.Items"
+             SliderValue="@current.Options.SliderValue"
+             SliderMin="@current.Options.SliderMin"
+             SliderMax="@current.Options.SliderMax"
+             SliderLabel="@current.Options.SliderLabel"
+             Class="@current.Options.Class"
+             SliderChanged="value => OnSliderChanged(current, value)"
+             SliderCommitted="value => OnSliderCommitted(current, value)"
+             ItemClicked="index => OnItemClicked(current, index)"
+             Closed="() => OnClosed(current)" />
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        Menus.Changed += OnChanged;
+    }
+
+    private static void OnItemClicked(WaxMenuInstance menu, int index) => menu.Select(index);
+
+    private static void OnSliderChanged(WaxMenuInstance menu, int value) =>
+        menu.Options.SliderChanged?.Invoke(value);
+
+    private static void OnSliderCommitted(WaxMenuInstance menu, int value) =>
+        menu.Options.SliderCommitted?.Invoke(value);
+
+    private void OnClosed(WaxMenuInstance menu) => Menus.Close(menu);
+
+    private void OnChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Menus.Changed -= OnChanged;
+}

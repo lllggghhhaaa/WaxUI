@@ -1,0 +1,12 @@
+@using LucideBlazor
+@using WaxUI.Utils
+
+@inherits WaxComponent
+
+<div role="separator" class="@CssClass" style="@Style" @attributes="AdditionalAttributes">
+    <LucideIcon Size="24" Name="minus" />
+</div>
+
+@code {
+    private string CssClass => Cn.Of("text-muted-foreground", Class).Value;
+}

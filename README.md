@@ -27,7 +27,7 @@ Add Khamsin to projects that write utility classes, then link the generated styl
 support in `App.razor`:
 
 ```bash
-dotnet add package Khamsin --version 0.3.0
+dotnet add package Khamsin --version 0.4.0
 ```
 
 ```razor

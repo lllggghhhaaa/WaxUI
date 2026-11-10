@@ -1,0 +1,13 @@
+@using WaxUI.Utils
+
+@inherits WaxComponent
+
+<div class="@CssClass" style="@Style" @attributes="AdditionalAttributes">
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string CssClass => Cn.Of("flex items-center gap-1.5", Class).Value;
+}

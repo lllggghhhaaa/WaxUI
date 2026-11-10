@@ -57,6 +57,7 @@
 
     private string CssClass => Cn.Of("fixed left-0 top-0 h-screen w-64 border-r border-border bg-card/80 backdrop-blur-sm flex flex-col z-40", Class).Value;
 
+    [KhamsinClasses]
     private static readonly KhamsinClass ActiveLinkClass = "bg-primary/12 text-primary font-semibold";
 
     private string GetItemClass() =>

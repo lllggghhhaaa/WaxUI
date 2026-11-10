@@ -1,0 +1,54 @@
+@inherits WaxComponent
+@implements IDisposable
+@inject IWaxAlertService Alerts
+
+@* Renders alerts opened through IWaxAlertService. Place once in the interactive
+   layout/page. The stack stays mounted as a polite live region. *@
+
+<div class="@StackClass" aria-live="polite" aria-atomic="false">
+    @foreach (var alert in Alerts.OpenAlerts)
+    {
+        var current = alert;
+
+        <div @key="current" class="pointer-events-auto w-full animate-in fade-in duration-200">
+            <WaxAlert Severity="@current.Options.Severity"
+                      Message="@current.Options.Message"
+                      Icon="@current.Options.Icon"
+                      Spoiler="@current.Options.Spoiler"
+                      Dismissible="@current.Options.Dismissible"
+                      OnDismiss="() => Dismiss(current)"
+                      Class="@current.Options.Class">
+                @current.Options.ChildContent
+            </WaxAlert>
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>Corner of the viewport where alerts stack.</summary>
+    [Parameter] public WaxAlertPosition Position { get; set; } = WaxAlertPosition.TopEnd;
+
+    private KhamsinClass PositionClass => Kx.Variant(Position,
+        (WaxAlertPosition.TopStart, "left-0 top-0"),
+        (WaxAlertPosition.TopCenter, "left-1/2 top-0 -translate-x-1/2"),
+        (WaxAlertPosition.TopEnd, "right-0 top-0"),
+        (WaxAlertPosition.BottomStart, "bottom-0 left-0"),
+        (WaxAlertPosition.BottomCenter, "bottom-0 left-1/2 -translate-x-1/2"),
+        (WaxAlertPosition.BottomEnd, "bottom-0 right-0"));
+
+    private string StackClass => Cn.Of(
+        "pointer-events-none fixed z-[110] flex w-[min(28rem,calc(100vw_-_2rem))] flex-col gap-3 p-4",
+        PositionClass,
+        Class).Value;
+
+    private void Dismiss(WaxAlertInstance alert) => Alerts.Dismiss(alert);
+
+    protected override void OnInitialized()
+    {
+        Alerts.Changed += OnChanged;
+    }
+
+    private void OnChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Alerts.Changed -= OnChanged;
+}

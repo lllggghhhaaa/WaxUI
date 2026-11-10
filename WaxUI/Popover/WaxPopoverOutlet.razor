@@ -1,0 +1,21 @@
+@implements IDisposable
+@inject IWaxPopoverService Popovers
+
+@* Renders the popovers opened through IWaxPopoverService. Place once in the
+   interactive layout/page. *@
+
+@foreach (var popover in Popovers.OpenPopovers)
+{
+    <WaxPopoverHost @key="popover" Instance="popover" Class="@popover.Options.Class" />
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        Popovers.Changed += OnChanged;
+    }
+
+    private void OnChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Popovers.Changed -= OnChanged;
+}

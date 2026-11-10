@@ -11,5 +11,6 @@ namespace WaxUI.QrCode;
 internal static class WaxQrCodeStyles
 {
     /// <summary>SVG root: height follows the viewBox ratio so Class-based widths (w-full, w-40...) never distort the symbol.</summary>
+    [KhamsinClasses]
     public static readonly KhamsinClass Svg = "block h-auto max-w-full";
 }

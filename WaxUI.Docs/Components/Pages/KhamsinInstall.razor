@@ -92,7 +92,8 @@
         <p class="text-sm text-muted-foreground mt-3">
             A library can also list stylesheets under
             <code class="bg-muted px-1 rounded-[0.25rem]">css</code> in its configuration. Those files
-            are embedded with the config and emitted in the base layer, so consumers still link only
+            are embedded with the config and emitted in the same stylesheet with their authored layers
+            preserved, so consumers still link only
             <code class="bg-muted px-1 rounded-[0.25rem]">khamsin.css</code>.
         </p>
     </div>
@@ -109,10 +110,19 @@
 &lt;button type="button" class="@@(Defaults + Khamsin)"&gt;@@ChildContent&lt;/button&gt;
 
 @@code {
-    private static readonly KhamsinClass Defaults = "rounded-[calc(var(--radius)_-_2px)] bg-ocean-600 px-4 py-2 text-white";
-
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
+}</code></pre>
+        <p class="text-sm text-muted-foreground mt-4 mb-2">
+            Closed class lists belong in the code-behind, where Khamsin reads them semantically:
+        </p>
+        <pre class="bg-muted rounded-[calc(var(--radius)_+_4px)] p-4 overflow-x-auto text-sm"><code>// PrimaryButton.razor.cs
+@@using Khamsin;
+
+public partial class PrimaryButton : KhamsinComponentBase
+{
+    [KhamsinClasses]
+    private const string Defaults = "rounded-[calc(var(--radius)_-_2px)] bg-ocean-600 px-4 py-2 text-white";
 }</code></pre>
         <p class="text-sm text-muted-foreground mt-4 mb-2">Consumers then override only what they need:</p>
         <pre class="bg-muted rounded-[calc(var(--radius)_+_4px)] p-4 overflow-x-auto text-sm"><code>&lt;PrimaryButton Khamsin=&quot;@@("px-6")&quot;&gt;Save&lt;/PrimaryButton&gt;</code></pre>

@@ -1,82 +1,85 @@
 ﻿/* Element defaults. Khamsin's preflight supplies the global reset; these are the library's
-   baseline tokens, typography and scrollbar behavior. They live in the base layer, so utility
-   classes still override them. */
-body {
-    font-family: 'DM Sans', system-ui, sans-serif;
-    min-height: 100vh;
-}
+   baseline tokens, typography and scrollbar behavior. They are authored in the base layer, so
+   utility classes still override them. */
+@layer base {
+    body {
+        font-family: 'DM Sans', system-ui, sans-serif;
+        min-height: 100vh;
+    }
 
-::-webkit-scrollbar {
-    width: 6px;
-}
+    ::-webkit-scrollbar {
+        width: 6px;
+    }
 
-::-webkit-scrollbar-track {
-    background: transparent;
-}
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
 
-::-webkit-scrollbar-thumb {
-    background: var(--muted);
-    border-radius: 9999px;
-}
+    ::-webkit-scrollbar-thumb {
+        background: var(--muted);
+        border-radius: 9999px;
+    }
 
-* {
-    border-color: var(--border);
-    outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
-}
+    * {
+        border-color: var(--border);
+        outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
+    }
 
-body {
-    background-color: var(--background);
-    color: var(--foreground);
-}
+    body {
+        background-color: var(--background);
+        color: var(--foreground);
+    }
 
-html {
-    font-size: var(--font-size);
-}
+    html {
+        font-size: var(--font-size);
+    }
 
-h1 {
-    font-size: var(--text-2xl);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-}
+    h1 {
+        font-size: var(--text-2xl);
+        font-weight: var(--font-weight-medium);
+        line-height: 1.5;
+    }
 
-h2 {
-    font-size: var(--text-xl);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-}
+    h2 {
+        font-size: var(--text-xl);
+        font-weight: var(--font-weight-medium);
+        line-height: 1.5;
+    }
 
-h3 {
-    font-size: var(--text-lg);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-}
+    h3 {
+        font-size: var(--text-lg);
+        font-weight: var(--font-weight-medium);
+        line-height: 1.5;
+    }
 
-h4 {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-}
+    h4 {
+        font-size: var(--text-base);
+        font-weight: var(--font-weight-medium);
+        line-height: 1.5;
+    }
 
-label {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-}
+    label {
+        font-size: var(--text-base);
+        font-weight: var(--font-weight-medium);
+        line-height: 1.5;
+    }
 
-button {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-}
+    button {
+        font-size: var(--text-base);
+        font-weight: var(--font-weight-medium);
+        line-height: 1.5;
+    }
 
-input {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-normal);
-    line-height: 1.5;
+    input {
+        font-size: var(--text-base);
+        font-weight: var(--font-weight-normal);
+        line-height: 1.5;
+    }
 }
 
 /* Utility classes for scrollbars. */
-.scrollbar-thin {
+@layer utilities {
+    .scrollbar-thin {
         scrollbar-width: thin;
         scrollbar-color: var(--border) transparent;
     }
@@ -99,56 +102,61 @@ input {
         background-color: var(--muted-foreground);
     }
 
-.scrollbar-none {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    .scrollbar-none {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .scrollbar-none::-webkit-scrollbar {
+        display: none;
+    }
 }
 
-.scrollbar-none::-webkit-scrollbar {
-    display: none;
-}
-/* Ranged WaxSlider: both native inputs span the whole track, so only their (invisible)
-   thumbs may capture the pointer — otherwise the top input would swallow the other's drags. */
-.wax-range-input {
-    pointer-events: none;
-    -webkit-appearance: none;
-    appearance: none;
-    background: transparent;
-}
+/* Component-internal helpers. */
+@layer components {
+    /* Ranged WaxSlider: both native inputs span the whole track, so only their (invisible)
+       thumbs may capture the pointer - otherwise the top input would swallow the other's drags. */
+    .wax-range-input {
+        pointer-events: none;
+        -webkit-appearance: none;
+        appearance: none;
+        background: transparent;
+    }
 
-.wax-range-input::-webkit-slider-runnable-track {
-    background: transparent;
-    border: 0;
-}
+    .wax-range-input::-webkit-slider-runnable-track {
+        background: transparent;
+        border: 0;
+    }
 
-.wax-range-input::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 20px;
-    height: 20px;
-    border: 0;
-    border-radius: 9999px;
-    background: transparent;
-    pointer-events: auto;
-}
+    .wax-range-input::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        border: 0;
+        border-radius: 9999px;
+        background: transparent;
+        pointer-events: auto;
+    }
 
-.wax-range-input::-moz-range-track {
-    background: transparent;
-    border: 0;
-}
+    .wax-range-input::-moz-range-track {
+        background: transparent;
+        border: 0;
+    }
 
-.wax-range-input::-moz-range-thumb {
-    width: 20px;
-    height: 20px;
-    border: 0;
-    border-radius: 9999px;
-    background: transparent;
-    pointer-events: auto;
-}
+    .wax-range-input::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border: 0;
+        border-radius: 9999px;
+        background: transparent;
+        pointer-events: auto;
+    }
 
-/* Khamsin has no arbitrary transition-property utility. The spoiler fades its blur with this
-   marker class; the duration comes from the duration-[250ms] utility. */
-.wax-transition-filter {
-    transition-property: filter;
-    transition-timing-function: var(--ease-out);
+    /* Khamsin has no arbitrary transition-property utility. The spoiler fades its blur with this
+       marker class; the duration comes from the duration-[250ms] utility. */
+    .wax-transition-filter {
+        transition-property: filter;
+        transition-timing-function: var(--ease-out);
+    }
 }

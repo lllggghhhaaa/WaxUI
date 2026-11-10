@@ -16,19 +16,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Khamsin" Version="0.3.5" />
+      <PackageReference Include="Microsoft.AspNetCore.App.Internal.Assets" Version="11.0.0" />
     </ItemGroup>
-    
-    <!-- Scan the library's sources so the CSS task extracts classes from Cn.Of/Kx.When calls
-         in the library's .razor and .cs files, not just from the compiled manifests. -->
-    <Target Name="KhamsinScanLibrarySources" BeforeTargets="KhamsinPrepareSources">
-        <ItemGroup>
-            <_KhamsinSource Include="$(RepoRoot)WaxUI/**/*.razor"
-                            Exclude="$(RepoRoot)WaxUI/obj/**;$(RepoRoot)WaxUI/bin/**" />
-            <_KhamsinSource Include="$(RepoRoot)WaxUI/**/*.cs"
-                            Exclude="$(RepoRoot)WaxUI/obj/**;$(RepoRoot)WaxUI/bin/**;$(RepoRoot)WaxUI/Services/Theme/ThemePreloaderScript.generated.cs" />
-        </ItemGroup>
-    </Target>
 
     <ItemGroup>
       <ProjectReference Include="..\WaxUI\WaxUI.csproj" />

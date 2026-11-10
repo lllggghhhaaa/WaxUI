@@ -1,0 +1,108 @@
+@using Microsoft.JSInterop
+@using WaxUI.Services
+@using WaxUI.Utils
+
+@inherits WaxComponent
+@implements IAsyncDisposable
+@inject IJSRuntime Js
+
+@* One service-driven popover: a fixed panel positioned against its anchor by the
+   popover JS module. Managed by WaxPopoverOutlet; not intended for direct use. *@
+<div @ref="_panel" class="@PanelClass" style="@Style" @attributes="AdditionalAttributes">
+    @Instance.Body
+    @if (Instance.Options.ShowArrow)
+    {
+        <div @ref="_arrow" class="@ArrowClass"></div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public WaxPopoverInstance Instance { get; set; } = null!;
+
+    private ElementReference _panel;
+    private ElementReference _arrow;
+    private WaxJsModule? _js;
+    private DotNetObjectReference<WaxPopoverHost>? _selfRef;
+    private string? _appliedPlacement;
+    private bool _positioned;
+
+    private string PanelClass => Cn.Of(
+        WaxPopoverStyles.Panel,
+        !_positioned ? "invisible" : WaxPopoverStyles.Enter,
+        Class).Value;
+
+    private string ArrowClass => WaxPopoverStyles.Arrow(_appliedPlacement);
+
+    private DotNetObjectReference<WaxPopoverHost> SelfRef => _selfRef ??= DotNetObjectReference.Create(this);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        _js ??= new WaxJsModule(Js, WaxModulePaths.Popover);
+
+        var applied = await _js.InvokeAsync<string?>("attachAnchored",
+            Instance.Anchor,
+            _panel,
+            Instance.Options.ShowArrow ? _arrow : null,
+            SelfRef,
+            new
+            {
+                placement = Instance.Options.Placement.ToPlacementName(),
+                offset = Instance.Options.Offset,
+                closeOnOutsideClick = Instance.Options.CloseOnOutsideClick,
+                closeOnEscape = Instance.Options.CloseOnEscape,
+            });
+
+        if (applied is null)
+        {
+            // The anchor (or the JS module) is unavailable: do not leave an invisible
+            // panel in the outlet forever.
+            await Instance.CloseAsync();
+            return;
+        }
+
+        if (!_positioned || applied != _appliedPlacement)
+        {
+            // The first open render keeps the panel invisible until JS has positioned
+            // it, so this second render is also what reveals it (and plays the animation).
+            _positioned = true;
+            _appliedPlacement = applied;
+            StateHasChanged();
+        }
+    }
+
+    [JSInvokable]
+    public Task OnWaxPopoverServiceOutside() =>
+        Instance.Options.CloseOnOutsideClick ? Instance.CloseAsync() : Task.CompletedTask;
+
+    [JSInvokable]
+    public Task OnWaxPopoverServiceEscape() =>
+        Instance.Options.CloseOnEscape ? Instance.CloseAsync() : Task.CompletedTask;
+
+    /// <summary>Scroll/resize flipped the panel to another side; re-render the arrow to match.</summary>
+    [JSInvokable]
+    public void OnWaxPopoverServicePlacement(string placement)
+    {
+        if (_appliedPlacement == placement)
+        {
+            return;
+        }
+
+        _appliedPlacement = placement;
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_panel.Context is not null && _js is not null)
+        {
+            await _js.InvokeVoidAsync("detachAnchored", _panel);
+        }
+
+        _selfRef?.Dispose();
+
+        if (_js is not null)
+        {
+            await _js.DisposeAsync();
+        }
+    }
+}

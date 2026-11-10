@@ -1,0 +1,44 @@
+@using WaxUI.Utils
+
+@inherits WaxComponent
+
+<div class="@CssClass"
+     style="@Style"
+     data-active="@(IsActive ? "true" : null)"
+     aria-hidden="@(Char is null && !HasFakeCaret ? "true" : null)"
+     @attributes="AdditionalAttributes">
+    @if (Char is { } character)
+    {
+        @character
+    }
+    else if (HasFakeCaret)
+    {
+        <div class="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden="true">
+            <div class="animate-caret-blink bg-foreground h-6 w-px duration-1000"></div>
+        </div>
+    }
+    else
+    {
+        <span class="text-muted-foreground/40">•</span>
+    }
+</div>
+
+@code {
+    private static readonly KhamsinClass BaseSlotClass = Cn.Of(
+        "relative flex h-12 w-10 items-center justify-center rounded-2xl border border-border bg-background font-mono text-lg font-semibold transition-colors sm:w-12",
+        "data-[active=true]:border-ring data-[active=true]:z-10",
+        "aria-[invalid=true]:border-destructive data-[active=true]:aria-[invalid=true]:border-destructive");
+
+    [CascadingParameter] private WaxInputOtpState? State { get; set; }
+
+    /// <summary>Zero-based slot position. The caret and character come from the owning input.</summary>
+    [Parameter, EditorRequired] public int Index { get; set; }
+
+    private char? Char => State?.GetChar(Index);
+
+    private bool IsActive => State is { IsFocused: true } state && state.ActiveIndex == Index;
+
+    private bool HasFakeCaret => IsActive && Char is null;
+
+    private string CssClass => Cn.Of(BaseSlotClass, Class).Value;
+}

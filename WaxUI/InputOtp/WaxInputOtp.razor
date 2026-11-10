@@ -1,0 +1,122 @@
+@using System.Text
+@using System.Text.RegularExpressions
+@using WaxUI.Utils
+
+@inherits WaxComponent
+
+<div class="@ContainerClass" style="@Style">
+    <CascadingValue Value="_state">
+        @ChildContent
+    </CascadingValue>
+
+    <input class="absolute inset-0 z-20 h-full w-full cursor-text opacity-0 outline-none disabled:cursor-not-allowed"
+           value="@Value"
+           maxlength="@MaxLength"
+           inputmode="@InputMode"
+           pattern="@Pattern"
+           autocomplete="@AutoComplete"
+           autocapitalize="off"
+           autocorrect="off"
+           spellcheck="false"
+           disabled="@Disabled"
+           autofocus="@(AutoFocus ? "autofocus" : null)"
+           @oninput="OnInput"
+           @onfocus="OnFocus"
+           @onblur="OnBlur"
+           @attributes="AdditionalAttributes" />
+</div>
+
+@code {
+    private bool _focused;
+    private Regex? _pattern;
+    private WaxInputOtpState _state = WaxInputOtpState.Empty;
+
+    /// <summary>The current code. Combine with <see cref="ValueChanged"/> (or <c>@bind-Value</c>).</summary>
+    [Parameter] public string Value { get; set; } = string.Empty;
+
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+
+    /// <summary>Number of slots the code can hold; input beyond it is dropped.</summary>
+    [Parameter] public int MaxLength { get; set; } = 6;
+
+    /// <summary>Optional regular expression each character must match, for example <c>[0-9]</c>.</summary>
+    [Parameter] public string? Pattern { get; set; }
+
+    /// <summary>The virtual keyboard hint. Defaults to numeric as in the OTP use case.</summary>
+    [Parameter] public string InputMode { get; set; } = "numeric";
+
+    [Parameter] public string AutoComplete { get; set; } = "one-time-code";
+
+    [Parameter] public bool Disabled { get; set; }
+
+    [Parameter] public bool AutoFocus { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string ContainerClass =>
+        Cn.Of(
+            "relative flex items-center gap-1.5",
+            Disabled ? "opacity-50" : null,
+            Class).Value;
+
+    protected override void OnParametersSet()
+    {
+        _pattern = string.IsNullOrEmpty(Pattern) ? null : new Regex("\\A(?:" + Pattern + ")\\z", RegexOptions.CultureInvariant);
+        RefreshState();
+    }
+
+    private async Task OnInput(ChangeEventArgs e)
+    {
+        var sanitized = Sanitize(e.Value?.ToString());
+        if (string.Equals(sanitized, Value, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        Value = sanitized;
+        RefreshState();
+        await ValueChanged.InvokeAsync(Value);
+    }
+
+    private string Sanitize(string? input)
+    {
+        if (string.IsNullOrEmpty(input) || MaxLength <= 0)
+        {
+            return string.Empty;
+        }
+
+        var builder = new StringBuilder(Math.Min(input.Length, MaxLength));
+        foreach (var character in input)
+        {
+            if (builder.Length >= MaxLength)
+            {
+                break;
+            }
+
+            if (_pattern is not null && !_pattern.IsMatch(character.ToString()))
+            {
+                continue;
+            }
+
+            builder.Append(character);
+        }
+
+        return builder.ToString();
+    }
+
+    private void OnFocus()
+    {
+        _focused = true;
+        RefreshState();
+    }
+
+    private void OnBlur()
+    {
+        _focused = false;
+        RefreshState();
+    }
+
+    /// <summary>Publishes a new snapshot; the caret sits on the next empty slot, clamped when full.</summary>
+    private void RefreshState()
+        => _state = new WaxInputOtpState(Value, _focused, MaxLength <= 0 ? -1 : Math.Min(Value.Length, MaxLength - 1));
+}
