@@ -1,0 +1,70 @@
+@page "/component/input-otp"
+@rendermode InteractiveServer
+@using WaxUI.InputOtp
+
+<PageTitle>Input OTP - WaxUI</PageTitle>
+
+<div class="mb-8">
+    <h1 class="text-3xl font-display font-bold text-foreground mb-2">Input OTP</h1>
+    <p class="text-muted-foreground">One-time password input with grouped slots, an active slot and a blinking caret.</p>
+</div>
+
+<div class="space-y-6">
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <div class="mt-2 border-t border-border pt-5">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                    <label id="otp-demo-label" class="font-mono text-xs text-muted-foreground">AUTHENTICATOR CODE</label>
+                    <p class="mt-1 text-xs text-muted-foreground">Enter the 6-digit code from your authenticator app.</p>
+                    <WaxInputOtp @bind-Value="_code" MaxLength="6" Pattern="[0-9]" Class="mt-3" aria-labelledby="otp-demo-label">
+                        <WaxInputOtpGroup>
+                            @for (var i = 0; i < 6; i++)
+                            {
+                                <WaxInputOtpSlot Index="i" />
+                            }
+                        </WaxInputOtpGroup>
+                    </WaxInputOtp>
+                </div>
+                <button type="button"
+                        disabled="@(_code.Length < 6)"
+                        class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity disabled:cursor-not-allowed disabled:opacity-40">
+                    Verify code
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h3 class="font-semibold text-foreground mb-1">Alphanumeric</h3>
+        <p class="text-sm text-muted-foreground mb-4">A pattern restricts which characters are accepted.</p>
+        <div class="flex flex-col gap-3 max-w-sm">
+            <label id="otp-alphanumeric-label" class="text-sm font-medium text-foreground">Backup code</label>
+            <WaxInputOtp @bind-Value="_backup" MaxLength="4" Pattern="[A-Za-z0-9]" InputMode="text" aria-labelledby="otp-alphanumeric-label">
+                <WaxInputOtpGroup>
+                    @for (var i = 0; i < 4; i++)
+                    {
+                        <WaxInputOtpSlot Index="i" />
+                    }
+                </WaxInputOtpGroup>
+            </WaxInputOtp>
+        </div>
+    </div>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h3 class="font-semibold text-foreground mb-1">Disabled</h3>
+        <p class="text-sm text-muted-foreground mb-4">The slots stay readable while the input cannot change.</p>
+        <WaxInputOtp Value="123456" MaxLength="6" Disabled="true" aria-label="Disabled one-time code">
+            <WaxInputOtpGroup>
+                @for (var i = 0; i < 6; i++)
+                {
+                    <WaxInputOtpSlot Index="i" />
+                }
+            </WaxInputOtpGroup>
+        </WaxInputOtp>
+    </div>
+</div>
+
+@code {
+    private string _code = string.Empty;
+    private string _backup = string.Empty;
+}

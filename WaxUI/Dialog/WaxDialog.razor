@@ -14,34 +14,44 @@
         class="@DialogCss"
         style="@Style"
         @attributes="AdditionalAttributes">
-    <WaxCard Variant="WaxCardVariant.Elevated" Hoverable="false">
+    <WaxCard Variant="WaxCardVariant.Elevated" Hoverable="false"
+             Class="flex max-h-[inherit] flex-col overflow-hidden">
         @if (!string.IsNullOrEmpty(Title))
         {
-            <h3 class="mb-1.5 mt-0 text-lg">@Title</h3>
+            <h3 class="mb-1.5 mt-0 shrink-0 text-lg">@Title</h3>
         }
         @if (DescriptionContent is not null)
         {
-            <p class="mb-3 mt-0 text-[13px] text-muted-foreground">@DescriptionContent</p>
+            <p class="mb-3 mt-0 shrink-0 text-[13px] text-muted-foreground">@DescriptionContent</p>
         }
         else if (!string.IsNullOrEmpty(Description))
         {
-            <p class="mb-3 mt-0 text-[13px] text-muted-foreground">@Description</p>
+            <p class="mb-3 mt-0 shrink-0 text-[13px] text-muted-foreground">@Description</p>
         }
 
-        @ChildContent
+        @if (ChildContent is not null)
+        {
+            @* The card owns the scroll area so the rounded border stays put while
+               the body scrolls; header and footer remain pinned. *@
+            <div class="min-h-0 flex-1 overflow-y-auto">
+                @ChildContent
+            </div>
+        }
 
         @if (!string.IsNullOrEmpty(Error))
         {
-            <p class="mb-2.5 mt-0 text-[13px] text-destructive">@Error</p>
+            <p class="mb-2.5 mt-0 shrink-0 text-[13px] text-destructive">@Error</p>
         }
 
         @if (FooterContent is not null)
         {
-            @FooterContent
+            <div class="shrink-0">
+                @FooterContent
+            </div>
         }
         else if (HasFooterButtons)
         {
-            <div class="mt-3.5 flex items-center justify-end gap-2.5">
+            <div class="mt-3.5 flex shrink-0 items-center justify-end gap-2.5">
                 @if (HasCancelButton)
                 {
                     <WaxButton Variant="WaxButtonVariant.Text" OnClick="HandleCancelClick">
@@ -139,7 +149,7 @@
         {
             return Cn.Of(
                 "fixed left-1/2 z-[75] m-0 w-[min(440px,calc(100vw_-_32px))] max-h-[min(640px,calc(100vh_-_64px))]",
-                "overflow-y-auto border-0 bg-transparent p-0 text-current backdrop:bg-foreground/45",
+                "overflow-visible border-0 bg-transparent p-0 text-current backdrop:bg-foreground/45",
                 AlignTop ? "top-[10vh] -translate-x-1/2" : "top-1/2 -translate-x-1/2 -translate-y-1/2",
                 BackdropClass, Class).Value;
         }
