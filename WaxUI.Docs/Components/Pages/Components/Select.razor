@@ -41,6 +41,7 @@
     private string _plan = "pro";
     private string _richPlan = "pro";
     private string _env = "dev";
+    private string _richCodec = "auto";
     private string _size = "medium";
     private string _country = "us";
     private string _disabledPlan = "pro";
@@ -98,6 +99,14 @@
                         <WaxSelectOption Value="dev" Label="Development" Icon="code" Description="Local sandbox" />
                         <WaxSelectOption Value="staging" Label="Staging" Icon="flask-conical" Description="Pre-release checks" />
                         <WaxSelectOption Value="prod" Label="Production" Icon="shield-check" Badge="Locked" Description="Freezes during launch" Disabled="true" />
+                    </WaxSelect>
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-muted-foreground">Selected description</label>
+                    <WaxSelect TValue="string" @bind-Value="_richCodec" Label="Codec" ShowSelectedDescription="true">
+                        <WaxSelectOption Value="auto" Label="Auto — best available" Icon="sparkles" Description="H.264 High on NVIDIA RTX 4070" Badge="Recommended" />
+                        <WaxSelectOption Value="h264" Label="H.264 High (4.2)" Icon="gpu" Description="NVIDIA RTX 4070 · avc1.64002A" Badge="GPU" />
+                        <WaxSelectOption Value="vp9" Label="VP9 Profile 0" Icon="cpu" Description="System processor · vp09.00.10.08" Badge="CPU" />
                     </WaxSelect>
                 </div>
             </div>, Icon: "monitor-dot"),
@@ -206,9 +215,19 @@
             </WaxSelect>
         </div>
 
+        <div>
+            <label class="mb-1 block text-xs font-medium text-muted-foreground">Selected description</label>
+            <WaxSelect TValue="string" @bind-Value="_richCodec" Label="Codec" ShowSelectedDescription="true">
+                <WaxSelectOption Value="auto" Label="Auto — best available" Icon="sparkles" Description="H.264 High on NVIDIA RTX 4070" Badge="Recommended" />
+                <WaxSelectOption Value="h264" Label="H.264 High (5.2)" Icon="gpu" Description="NVIDIA RTX 4070 · avc1.64002A" Badge="GPU" />
+                <WaxSelectOption Value="vp9" Label="VP9 Profile 0" Icon="cpu" Description="System processor · vp09.00.10.08" Badge="CPU" />
+            </WaxSelect>
+        </div>
+
         @code {
             private string _richPlan = "pro";
             private string _env = "dev";
+            private string _richCodec = "auto";
         }
         """;
 
