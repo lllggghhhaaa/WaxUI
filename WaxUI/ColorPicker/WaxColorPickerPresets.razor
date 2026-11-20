@@ -1,0 +1,74 @@
+@* Preset swatches shared by both pickers: solid hex entries render as a color, and (when the
+   picker accepts gradients) CSS gradient entries render as a gradient. Unparsable entries are skipped. *@
+
+<div class="mb-3 flex items-center gap-2">
+    <span class="shrink-0 text-xs text-muted-foreground">
+        Presets
+    </span>
+
+    <ul role="list"
+        aria-label="Color presets"
+        class="flex min-w-0 flex-1 list-none flex-wrap items-center gap-2 p-0">
+        @foreach (var preset in _presets)
+        {
+            <li @key="preset.Raw">
+                <button type="button"
+                        class="@WaxColorPickerStyles.PresetButton @ShapeClass"
+                        aria-label="@preset.Label"
+                        @onclick="() => OnSelect.InvokeAsync(preset.Raw)">
+                    <span class="@SwatchClass(preset)"
+                          style="@preset.Style"></span>
+                </button>
+            </li>
+        }
+    </ul>
+</div>
+
+@code {
+    private readonly record struct Preset(string Raw, string Label, string Style, bool Translucent);
+
+    private readonly List<Preset> _presets = [];
+
+    /// <summary>Raw preset values (hex colors and/or CSS gradients).</summary>
+    [Parameter] public IEnumerable<string>? Values { get; set; }
+
+    /// <summary>When true, gradient strings are offered as gradient swatches instead of being skipped.</summary>
+    [Parameter] public bool AllowGradients { get; set; }
+
+    [Parameter] public WaxColorPickerSwatchShape SwatchShape { get; set; } = WaxColorPickerSwatchShape.Default;
+
+    [Parameter] public EventCallback<string> OnSelect { get; set; }
+
+    private KhamsinClass ShapeClass => Cn.Of(
+        SwatchShape == WaxColorPickerSwatchShape.Circle ? "rounded-full" : "rounded-lg");
+
+    private KhamsinClass SwatchClass(Preset preset) => Cn.Of(
+        WaxColorPickerStyles.Swatch,
+        "block h-6 w-6 shadow-sm",
+        ShapeClass,
+        (preset.Translucent, WaxColorPickerStyles.AlphaChecker));
+
+    protected override void OnParametersSet()
+    {
+        _presets.Clear();
+        if (Values is null) return;
+
+        foreach (var raw in Values)
+        {
+            if (_presets.Any(existing => existing.Raw == raw)) continue; // @key must stay unique
+
+            if (WaxColorMath.ParseHexColor(raw) is { } color)
+            {
+                var alpha = color.AlphaPercent ?? 100;
+                var hex = WaxColorMath.FormatHex(color.Rgb, alpha);
+                _presets.Add(new Preset(raw, $"Select {hex}", $"background-color: {hex}", alpha < 100));
+            }
+            else if (AllowGradients && WaxGradientMath.ParseGradient(raw) is { } gradient)
+            {
+                var css = WaxGradientMath.FormatGradient(gradient.Type, gradient.Angle, gradient.Stops);
+                var translucent = gradient.Stops.Any(stop => stop.AlphaPercent < 100);
+                _presets.Add(new Preset(raw, $"Select gradient {raw}", $"background-image: {css}", translucent));
+            }
+        }
+    }
+}

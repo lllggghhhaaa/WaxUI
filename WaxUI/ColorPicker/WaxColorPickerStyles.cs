@@ -3,7 +3,7 @@
 namespace WaxUI.ColorPicker;
 
 /// <summary>
-/// Utility classes for WaxColorPicker, wrapped in Cn.Of so the build extracts them. Colors come
+/// Utility classes for WaxColorPicker and WaxGradientColorPicker, wrapped in Cn.Of so the build extracts them. Colors come
 /// only from Theme/tokens.css; the alpha checkerboard uses --color-border so it stays visible over
 /// card, popover and muted surfaces in both themes.
 /// </summary>
@@ -45,7 +45,11 @@ internal static class WaxColorPickerStyles
         Cn.Of("block w-full cursor-pointer rounded-lg px-3 py-1.5 text-left text-sm transition-colors hover:bg-muted").Value;
 
     public static readonly KhamsinClass HexInput =
-        Cn.Of("w-full min-w-0 bg-transparent font-light text-base tracking-wide text-foreground outline-none disabled:cursor-not-allowed").Value;
+        Cn.Of("w-20 min-w-0 bg-transparent text-center font-light text-base tracking-wide text-foreground outline-none disabled:cursor-not-allowed").Value;
+
+    /// <summary>Hex readout column; wider than the numeric channel columns beside it (position, alpha).</summary>
+    public static readonly KhamsinClass HexField =
+        Cn.Of("flex-1 min-w-32").Value;
 
     public static readonly KhamsinClass ChannelLabel =
         Cn.Of("text-[10px] uppercase tracking-wide text-muted-foreground").Value;
@@ -53,4 +57,30 @@ internal static class WaxColorPickerStyles
     /// <summary>Invisible full-screen backdrop used to close the floating panel and the format menu.</summary>
     public static readonly KhamsinClass ClickAway =
         Cn.Of("fixed inset-0 z-[94]").Value;
+
+    /// <summary>Discreet segmented control container (solid/gradient mode toggle, gradient type selector).</summary>
+    public static readonly KhamsinClass SegmentGroup =
+        Cn.Of("inline-flex shrink-0 items-center gap-0.5 rounded-lg bg-muted/60 p-0.5").Value;
+
+    public static readonly KhamsinClass SegmentButton =
+        Cn.Of("flex cursor-pointer items-center justify-center rounded-md px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60").Value;
+
+    /// <summary>Selected option inside a segmented control.</summary>
+    public static readonly KhamsinClass SegmentButtonActive =
+        Cn.Of("bg-card text-foreground shadow-sm").Value;
+
+    /// <summary>Gradient track hit area; the checkerboard, gradient bar and stop handles live inside.</summary>
+    public static readonly KhamsinClass GradientTrack =
+        Cn.Of("relative h-6 w-full cursor-pointer touch-none select-none rounded-full").Value;
+
+    /// <summary>The h-3.5 gradient bar centered inside the taller hit area.</summary>
+    public static readonly KhamsinClass GradientBar =
+        Cn.Of("pointer-events-none absolute inset-x-0 top-1/2 h-3.5 -translate-y-1/2 overflow-hidden rounded-full").Value;
+
+    /// <summary>Draggable/focusable gradient stop handle; fill color comes from an inline style.</summary>
+    public static readonly KhamsinClass StopHandle =
+        Cn.Of("absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 cursor-crosshair rounded-full border-2 border-white shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring").Value;
+
+    public static readonly KhamsinClass StopHandleActive =
+        Cn.Of("ring-2 ring-ring").Value;
 }

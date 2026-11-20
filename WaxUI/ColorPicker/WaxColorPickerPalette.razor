@@ -1,0 +1,236 @@
+@using Microsoft.JSInterop
+@using WaxUI.Services
+@using WaxUI.Slider
+@implements IAsyncDisposable
+@inject IJSRuntime Js
+
+<div @ref="_fieldRef"
+     role="slider"
+     aria-label="Saturation and brightness"
+     aria-valuemin="0"
+     aria-valuemax="100"
+     aria-valuenow="@Saturation"
+     aria-valuetext="@($"Saturation {Saturation}%, brightness {Value}%")"
+     tabindex="@(Disabled ? -1 : 0)"
+     class="@FieldClass"
+     style="@($"background-color: {HueHex}")"
+     @onpointerdown="OnFieldPointerDownAsync"
+     @onpointermove="OnFieldPointerMove"
+     @onpointerup="OnFieldPointerUpAsync"
+     @onpointercancel="OnFieldPointerUpAsync"
+     @onkeydown="OnFieldKeyDownAsync">
+
+    <div class="absolute inset-0"
+         style="background: linear-gradient(to right, #fff, transparent);">
+    </div>
+
+    <div class="absolute inset-0"
+         style="background: linear-gradient(to top, #000, transparent);">
+    </div>
+
+    <div class="@WaxColorPickerStyles.SvThumb"
+         aria-hidden="true"
+         style="@($"left: {Saturation}%; top: {100 - Value}%; background-color: {OpaqueHex};")">
+    </div>
+</div>
+
+<div class="space-y-2.5">
+    <div class="flex items-center">
+        <span class="w-12 shrink-0 text-xs text-muted-foreground">
+            Hue
+        </span>
+
+        <div class="min-w-0 flex-1">
+            <WaxSlider Min="0"
+                       Max="360"
+                       Step="1"
+                       ShowValue="false"
+                       Disabled="@Disabled"
+                       Value="@Hue"
+                       ValueChanged="OnHueInput"
+                       OnCommitted="OnHueCommitted"
+                       TrackStyle="@HueTrackStyle"
+                       ThumbStyle="@ThumbOverride" />
+        </div>
+    </div>
+
+    @if (ShowAlpha)
+    {
+        <div class="flex items-center">
+            <span class="w-12 shrink-0 text-xs text-muted-foreground">
+                Alpha
+            </span>
+
+            <div class="min-w-0 flex-1">
+                <WaxSlider Min="0"
+                           Max="100"
+                           Step="1"
+                           ShowValue="false"
+                           Disabled="@Disabled"
+                           Value="@Alpha"
+                           ValueChanged="OnAlphaInput"
+                           OnCommitted="OnAlphaCommitted"
+                           TrackStyle="@AlphaTrackStyle"
+                           ThumbStyle="@ThumbOverride" />
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private const string HueTrackStyle =
+        "width: 100%; background: linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);";
+
+    private const string ThumbOverride = "background-color: #ffffff; border-color: rgba(0, 0, 0, 0.1);";
+
+    private readonly record struct Rect(double Left, double Top, double Width, double Height);
+
+    private WaxJsModule? _jsInterop;
+    private ElementReference _fieldRef;
+    private Rect _fieldRect;
+    private bool _dragging;
+    private long _pointerUps;
+
+    /// <summary>Hue in degrees (0–360).</summary>
+    [Parameter] public double Hue { get; set; }
+
+    /// <summary>Saturation percentage (0–100).</summary>
+    [Parameter] public int Saturation { get; set; }
+
+    /// <summary>Brightness/value percentage (0–100).</summary>
+    [Parameter] public int Value { get; set; }
+
+    /// <summary>Alpha percentage (0–100).</summary>
+    [Parameter] public int Alpha { get; set; }
+
+    [Parameter] public bool ShowAlpha { get; set; } = true;
+
+    [Parameter] public bool Disabled { get; set; }
+
+    /// <summary>Live color as the pointer or slider moves; the owner applies it without emitting.</summary>
+    [Parameter] public EventCallback<(double Hue, int Saturation, int Value, int Alpha)> OnInput { get; set; }
+
+    /// <summary>Settled color (pointer up, slider release, keyboard step).</summary>
+    [Parameter] public EventCallback<(double Hue, int Saturation, int Value, int Alpha)> OnCommit { get; set; }
+
+    /// <summary>True while the saturation field is being dragged, so external values can wait.</summary>
+    [Parameter] public EventCallback<bool> OnEditingChanged { get; set; }
+
+    private string FieldClass => Cn.Of(
+        WaxColorPickerStyles.SvField,
+        Disabled ? "pointer-events-none opacity-60" : null).Value;
+
+    private string HueHex => WaxColorMath.FormatHex(WaxColorMath.HsvToRgb(Hue, 100, 100), 100);
+
+    private string OpaqueHex => WaxColorMath.FormatHex(WaxColorMath.HsvToRgb(Hue, Saturation, Value), 100);
+
+    private string AlphaTrackStyle =>
+        $"width: 100%; background-image: linear-gradient(to right, transparent, {OpaqueHex}), repeating-conic-gradient(var(--color-border) 0% 25%, transparent 0% 50%); background-size: auto, 10px 10px;";
+
+    /// <summary>The current pair of HSV and alpha, as the sliders and field see it.</summary>
+    private (double Hue, int Saturation, int Value, int Alpha) Current => (Hue, Saturation, Value, Alpha);
+
+    protected override void OnInitialized() => _jsInterop = new WaxJsModule(Js, WaxModulePaths.ColorPicker);
+
+    /// <summary>
+    /// Installs the native arrow-key scroll guard (Blazor handlers cannot preventDefault) once the
+    /// field is in the DOM.
+    /// </summary>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _jsInterop is null) return;
+
+        try
+        {
+            await _jsInterop.InvokeAsync<object?>("preventArrowKeyScroll", _fieldRef);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (TaskCanceledException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// Captures the pointer and measures the field. The handler resumes after an interop round trip,
+    /// so it compares the pointer-up counter before/after to detect a fast click.
+    /// </summary>
+    private async Task OnFieldPointerDownAsync(PointerEventArgs e)
+    {
+        if (Disabled || e.Button != 0 || _jsInterop is null) return;
+
+        var upsAtStart = _pointerUps;
+        var rect = await _jsInterop.InvokeAsync<Rect>("beginPointerDrag", _fieldRef, e.PointerId);
+        if (rect.Width <= 0 || rect.Height <= 0) return;
+
+        _fieldRect = rect;
+        UpdateFromPoint(e.ClientX, e.ClientY);
+
+        if (_pointerUps != upsAtStart)
+        {
+            await OnCommit.InvokeAsync(Current);
+            return;
+        }
+
+        _dragging = true;
+        await OnEditingChanged.InvokeAsync(true);
+    }
+
+    private void OnFieldPointerMove(PointerEventArgs e)
+    {
+        if (_dragging && !Disabled) UpdateFromPoint(e.ClientX, e.ClientY);
+    }
+
+    private async Task OnFieldPointerUpAsync(PointerEventArgs e)
+    {
+        _pointerUps++;
+        if (!_dragging) return;
+
+        _dragging = false;
+        await OnEditingChanged.InvokeAsync(false);
+        await OnCommit.InvokeAsync(Current);
+    }
+
+    private void UpdateFromPoint(double clientX, double clientY)
+    {
+        var x = Math.Clamp((clientX - _fieldRect.Left) / _fieldRect.Width, 0, 1);
+        var y = Math.Clamp((clientY - _fieldRect.Top) / _fieldRect.Height, 0, 1);
+        _ = OnInput.InvokeAsync((Hue, (int)Math.Round(x * 100), (int)Math.Round((1 - y) * 100), Alpha));
+    }
+
+    private async Task OnFieldKeyDownAsync(KeyboardEventArgs e)
+    {
+        if (Disabled) return;
+
+        var step = e.ShiftKey ? 5 : 1;
+        var (saturation, value) = e.Key switch
+        {
+            "ArrowLeft" => (-step, 0),
+            "ArrowRight" => (step, 0),
+            "ArrowUp" => (0, step),
+            "ArrowDown" => (0, -step),
+            _ => (0, 0),
+        };
+
+        if (saturation == 0 && value == 0) return;
+
+        await OnCommit.InvokeAsync((Hue, Math.Clamp(Saturation + saturation, 0, 100), Math.Clamp(Value + value, 0, 100), Alpha));
+    }
+
+    private Task OnHueInput(double hue) => OnInput.InvokeAsync((hue, Saturation, Value, Alpha));
+
+    private Task OnHueCommitted(double hue) => OnCommit.InvokeAsync((hue, Saturation, Value, Alpha));
+
+    private Task OnAlphaInput(double alpha) => OnInput.InvokeAsync((Hue, Saturation, Value, (int)Math.Round(alpha)));
+
+    private Task OnAlphaCommitted(double alpha) => OnCommit.InvokeAsync((Hue, Saturation, Value, (int)Math.Round(alpha)));
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_jsInterop is not null)
+        {
+            await _jsInterop.DisposeAsync();
+        }
+    }
+}

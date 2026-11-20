@@ -1,0 +1,226 @@
+@using LucideBlazor
+@using Microsoft.JSInterop
+@using WaxUI.IconButton
+@using WaxUI.Services
+@implements IAsyncDisposable
+@inject IJSRuntime Js
+
+<div class="relative z-20 mt-4 flex items-center justify-between text-sm text-muted-foreground">
+    <div class="relative z-30">
+        <button type="button"
+                class="@WaxColorPickerStyles.FormatTrigger"
+                disabled="@Disabled"
+                aria-haspopup="listbox"
+                aria-expanded="@Aria(_menuOpen)"
+                aria-label="Color format"
+                @onclick="ToggleMenu"
+                @onkeydown="OnMenuKeyDown"
+                @ref="_triggerRef">
+            <span>@Format.ToLabel()</span>
+            <LucideIcon Name="chevron-down" Size="12" ClassName="@ChevronClass" />
+        </button>
+
+        @if (_menuOpen)
+        {
+            <div class="@WaxColorPickerStyles.ClickAway" aria-hidden="true" @onclick="CloseMenu"></div>
+            <div role="listbox" aria-label="Color format" class="@WaxColorPickerStyles.FormatMenu">
+                @foreach (var option in Options)
+                {
+                    <button type="button"
+                            @key="option"
+                            role="option"
+                            aria-selected="@Aria(Format == option)"
+                            class="@OptionClass(option)"
+                            @onclick="() => SelectAsync(option)">
+                        @option.ToLabel()
+                    </button>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="flex items-center gap-1">
+        @if (ShowCopy)
+        {
+            <WaxIconButton Size="WaxIconButtonSize.XSmall"
+                           Disabled="@Disabled"
+                           Title="@(_copied ? "Copied" : "Copy value")"
+                           OnClick="CopyAsync">
+                <LucideIcon Name="@(_copied ? "check" : "copy")" Size="14" />
+            </WaxIconButton>
+        }
+        @if (ShowEyedropper)
+        {
+            <WaxIconButton Size="WaxIconButtonSize.XSmall"
+                           Disabled="@(Disabled || _eyedropperSupported == false)"
+                           Title="@EyedropperTitle"
+                           OnClick="PickWithEyedropperAsync">
+                <LucideIcon Name="pipette" Size="14" />
+            </WaxIconButton>
+        }
+    </div>
+</div>
+
+@code {
+    private const int CopiedIndicatorMilliseconds = 1500;
+
+    private static readonly WaxColorPickerFormat[] Options =
+    [
+        WaxColorPickerFormat.Hex,
+        WaxColorPickerFormat.Rgb,
+        WaxColorPickerFormat.Hsl,
+        WaxColorPickerFormat.Oklch,
+    ];
+
+    private readonly record struct EyedropperResult(string? Color, bool Supported);
+
+    private WaxJsModule? _jsInterop;
+    private ElementReference _triggerRef;
+    private bool _menuOpen;
+    private bool _copied;
+    private CancellationTokenSource? _copyCts;
+    private bool? _eyedropperSupported;
+
+    [Parameter, EditorRequired] public WaxColorPickerFormat Format { get; set; }
+
+    [Parameter] public bool Disabled { get; set; }
+
+    [Parameter] public bool ShowCopy { get; set; }
+
+    [Parameter] public bool ShowEyedropper { get; set; }
+
+    /// <summary>The formatted value put on the clipboard.</summary>
+    [Parameter] public string CopyValue { get; set; } = string.Empty;
+
+    [Parameter] public EventCallback<WaxColorPickerFormat> FormatChanged { get; set; }
+
+    [Parameter] public EventCallback<string> EyedropperPicked { get; set; }
+
+    [Parameter] public EventCallback OnEyedropperUnsupported { get; set; }
+
+    private string ChevronClass => Cn.Of(
+        "transition-transform duration-200",
+        _menuOpen ? "rotate-180" : null).Value;
+
+    private string EyedropperTitle => !Disabled && _eyedropperSupported == false
+        ? "Color picking from screen is not supported in this browser"
+        : "Pick color from screen";
+
+    private string OptionClass(WaxColorPickerFormat option) => Cn.Of(
+        WaxColorPickerStyles.FormatOption,
+        Format == option ? "bg-primary/10 font-medium text-foreground" : "text-muted-foreground").Value;
+
+    /// <summary>Blazor renders a bool attribute as empty/absent; ARIA needs the literal "true"/"false".</summary>
+    private static string Aria(bool value) => value ? "true" : "false";
+
+    protected override void OnInitialized() => _jsInterop = new WaxJsModule(Js, WaxModulePaths.ColorPicker);
+
+    /// <summary>
+    /// Installs the native arrow-key scroll guard on the trigger (Blazor handlers cannot preventDefault)
+    /// and detects EyeDropper support once so the pipette can disable itself where the API is missing.
+    /// </summary>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _jsInterop is null) return;
+
+        try
+        {
+            await _jsInterop.InvokeAsync<object?>("preventArrowKeyScroll", _triggerRef);
+
+            if (ShowEyedropper && _eyedropperSupported is null)
+            {
+                _eyedropperSupported = await _jsInterop.InvokeAsync<bool>("isEyedropperSupported");
+                if (!_eyedropperSupported.Value) StateHasChanged();
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (TaskCanceledException)
+        {
+        }
+    }
+
+    private void ToggleMenu() => _menuOpen = !_menuOpen;
+
+    private void CloseMenu() => _menuOpen = false;
+
+    private async Task SelectAsync(WaxColorPickerFormat option)
+    {
+        _menuOpen = false;
+        await FormatChanged.InvokeAsync(option);
+
+        await _triggerRef.FocusAsync();
+    }
+
+    private void OnMenuKeyDown(KeyboardEventArgs e)
+    {
+        if (Disabled) return;
+
+        if (!_menuOpen)
+        {
+            if (e.Key == "ArrowDown") _menuOpen = true;
+            return;
+        }
+
+        var step = e.Key switch
+        {
+            "ArrowDown" => 1,
+            "ArrowUp" => -1,
+            _ => 0,
+        };
+
+        if (step == 0) return;
+
+        var index = Array.IndexOf(Options, Format);
+        _ = FormatChanged.InvokeAsync(Options[(index + step + Options.Length) % Options.Length]);
+    }
+
+    private async Task CopyAsync()
+    {
+        if (_jsInterop is null) return;
+        if (!await _jsInterop.InvokeAsync<bool>("copyText", CopyValue)) return;
+
+        _copyCts?.Cancel();
+        _copyCts?.Dispose();
+        var cts = _copyCts = new CancellationTokenSource();
+
+        _copied = true;
+        try
+        {
+            await Task.Delay(CopiedIndicatorMilliseconds, cts.Token);
+            _copied = false;
+        }
+        catch (OperationCanceledException)
+        {
+            // A newer copy (or disposal) took over the indicator.
+        }
+    }
+
+    private async Task PickWithEyedropperAsync()
+    {
+        if (_jsInterop is null) return;
+
+        var result = await _jsInterop.InvokeAsync<EyedropperResult>("pickColorWithEyedropper");
+        if (!result.Supported)
+        {
+            await OnEyedropperUnsupported.InvokeAsync();
+            return;
+        }
+
+        if (result.Color is null) return;
+
+        await EyedropperPicked.InvokeAsync(result.Color);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _copyCts?.Cancel();
+        _copyCts?.Dispose();
+
+        if (_jsInterop is not null)
+        {
+            await _jsInterop.DisposeAsync();
+        }
+    }
+}

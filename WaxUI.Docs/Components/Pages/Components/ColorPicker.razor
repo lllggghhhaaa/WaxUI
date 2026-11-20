@@ -1,94 +1,21 @@
 @page "/component/color-picker"
 @rendermode InteractiveServer
+@using WaxUI.Avatar
+@using WaxUI.Badge
+@using WaxUI.Button
 @using WaxUI.ColorPicker
-@using WaxUI.Tabs
-@using WaxUI.Theme
 
 <PageTitle>Color Picker - WaxUI</PageTitle>
 
 <div class="mb-8">
     <h1 class="text-3xl font-display font-bold text-foreground mb-2">Color Picker</h1>
-    <p class="text-muted-foreground">HSV color picking with hue and alpha sliders, HEX/RGB/HSL/OKLCH readouts, presets, copy, and optional eyedropper support. When the browser lacks the EyeDropper API, the picker control disables itself automatically.</p>
+    <p class="text-muted-foreground">HSV color picking with hue and alpha sliders, HEX/RGB/HSL/OKLCH readouts, presets, copy, and optional eyedropper support. CSS gradients (linear, radial, conic) with multiple draggable color stops live in the separate component: <code>WaxGradientColorPicker</code>. When the browser lacks the EyeDropper API, the picker control disables itself automatically.</p>
 </div>
 
 <div class="space-y-6">
-    <div class="p-6 rounded-3xl bg-card border border-border">
-        <h3 class="font-semibold text-foreground mb-1">Variants</h3>
-        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_variantsTabs" TabListClass="mb-4" />
-    </div>
-
-    <div class="p-6 rounded-3xl bg-card border border-border">
-        <h3 class="font-semibold text-foreground mb-1">Color Formats</h3>
-        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_formatsTabs" TabListClass="mb-4" />
-    </div>
-
-    <div class="p-6 rounded-3xl bg-card border border-border">
-        <h3 class="font-semibold text-foreground mb-1">Presets</h3>
-        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_presetsTabs" TabListClass="mb-4" />
-    </div>
-
-    <div class="p-6 rounded-3xl bg-card border border-border">
-        <h3 class="font-semibold text-foreground mb-1">Without Alpha</h3>
-        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_noAlphaTabs" TabListClass="mb-4" />
-    </div>
-
-    <div class="p-6 rounded-3xl bg-card border border-border">
-        <h3 class="font-semibold text-foreground mb-1">Options</h3>
-        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_optionsTabs" TabListClass="mb-4" />
-    </div>
-
-    <div class="p-6 rounded-3xl bg-card border border-border">
-        <h3 class="font-semibold text-foreground mb-1">Disabled</h3>
-        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_disabledTabs" TabListClass="mb-4" />
-    </div>
-
-    <div class="p-6 rounded-3xl bg-card border border-border">
-        <h3 class="font-semibold text-foreground mb-1">Bound Value</h3>
-        <WaxTab Variant="WaxTabVariant.Primary" Tabs="_boundTabs" TabListClass="mb-4" />
-    </div>
-</div>
-
-@code {
-    private string _boundColor = "#3B82F6";
-
-    private static readonly string[] PresetColors =
-    [
-        "#C4522A",
-        "#E8A020",
-        "#6B9B64",
-        "#3A8FA8",
-        "#7B5EA7",
-        "#B93A3A",
-        "#2D1B0E",
-    ];
-
-    private List<WaxTabItem> _variantsTabs = [];
-    private List<WaxTabItem> _formatsTabs = [];
-    private List<WaxTabItem> _presetsTabs = [];
-    private List<WaxTabItem> _noAlphaTabs = [];
-    private List<WaxTabItem> _optionsTabs = [];
-    private List<WaxTabItem> _disabledTabs = [];
-    private List<WaxTabItem> _boundTabs = [];
-
-    private const string _variantsCode = "@using WaxUI.ColorPicker\n\n<div class=\"flex flex-wrap items-start gap-8\">\n    <WaxColorPicker Variant=\"WaxColorPickerVariant.Inline\" />\n    <WaxColorPicker Variant=\"WaxColorPickerVariant.Popover\" DefaultValue=\"#6B9B64\" />\n    <WaxColorPicker Variant=\"WaxColorPickerVariant.Swatch\" DefaultValue=\"#E8A020\" />\n</div>";
-
-    private const string _formatsCode = "@using WaxUI.ColorPicker\n\n<div class=\"flex flex-wrap items-start gap-8\">\n    <WaxColorPicker DefaultFormat=\"WaxColorPickerFormat.Hex\" />\n    <WaxColorPicker DefaultFormat=\"WaxColorPickerFormat.Rgb\" DefaultValue=\"#C4522A\" />\n    <WaxColorPicker DefaultFormat=\"WaxColorPickerFormat.Hsl\" DefaultValue=\"#E8A020\" />\n    <WaxColorPicker DefaultFormat=\"WaxColorPickerFormat.Oklch\" DefaultValue=\"#3A8FA8\" />\n</div>";
-
-    private const string _presetsCode = "@using WaxUI.ColorPicker\n\n<WaxColorPicker Presets=\"PresetColors\" />\n\n@code {\n    private static readonly string[] PresetColors =\n    [\n        \"#C4522A\", \"#E8A020\", \"#6B9B64\",\n        \"#3A8FA8\", \"#7B5EA7\", \"#B93A3A\",\n    ];\n}";
-
-    private const string _noAlphaCode = "@using WaxUI.ColorPicker\n\n<!-- Opaque output: alpha slider and channel hidden, values stay 6-digit -->\n<div class=\"flex flex-wrap items-start gap-8\">\n    <WaxColorPicker ShowAlpha=\"false\" />\n    <WaxColorPicker ShowAlpha=\"false\" Variant=\"WaxColorPickerVariant.Popover\" DefaultValue=\"#C4522A\" />\n    <WaxColorPicker ShowAlpha=\"false\" Variant=\"WaxColorPickerVariant.Swatch\" DefaultValue=\"#3A8FA8\" />\n</div>";
-
-    private const string _optionsCode = "@using WaxUI.ColorPicker\n\n<div class=\"flex flex-wrap items-start gap-8\">\n    <!-- Copy value, no eyedropper -->\n    <WaxColorPicker ShowCopy=\"true\" ShowEyedropper=\"false\" DefaultValue=\"#6B9B64\" />\n\n    <!-- Circle swatch trigger -->\n    <WaxColorPicker Variant=\"WaxColorPickerVariant.Swatch\" SwatchShape=\"WaxColorPickerSwatchShape.Circle\" DefaultValue=\"#E8A020\" />\n</div>";
-
-    private const string _disabledCode = "@using WaxUI.ColorPicker\n\n<div class=\"flex flex-wrap items-start gap-8\">\n    <WaxColorPicker Disabled=\"true\" />\n    <WaxColorPicker Variant=\"WaxColorPickerVariant.Popover\" Disabled=\"true\" />\n</div>";
-
-    private const string _boundCode = "@using WaxUI.ColorPicker\n\n<div>\n    <WaxColorPicker @bind-Value=\"_color\" ShowCopy=\"true\" />\n    <p class=\"mt-4 font-mono text-sm text-muted-foreground\">@_color</p>\n</div>\n\n@code {\n    private string _color = \"#3B82F6\";\n}";
-
-    protected override void OnInitialized()
-    {
-        _variantsTabs =
-        [
-            new("Preview", Content: @<div class="flex flex-wrap items-start gap-8">
+    <DocsSection Title="Variants" Code="@_variantsCode">
+        <Preview>
+            <div class="flex flex-wrap items-start gap-8">
                 <div class="space-y-2">
                     <p class="text-xs uppercase tracking-wide text-muted-foreground">Inline</p>
                     <WaxColorPicker Variant="WaxColorPickerVariant.Inline" />
@@ -101,33 +28,71 @@
                     <p class="text-xs uppercase tracking-wide text-muted-foreground">Swatch</p>
                     <WaxColorPicker Variant="WaxColorPickerVariant.Swatch" DefaultValue="#E8A020" />
                 </div>
-            </div>, Icon: "monitor-dot"),
-            new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_variantsCode</code></pre>, Icon: "code")
-        ];
+            </div>
+        </Preview>
+    </DocsSection>
 
-        _formatsTabs =
-        [
-            new("Preview", Content: @<div class="flex flex-wrap items-start gap-8">
+    <DocsSection Title="Color Formats" Code="@_formatsCode">
+        <Preview>
+            <div class="flex flex-wrap items-start gap-8">
                 <WaxColorPicker DefaultFormat="WaxColorPickerFormat.Hex" />
                 <WaxColorPicker DefaultFormat="WaxColorPickerFormat.Rgb" DefaultValue="#C4522A" />
                 <WaxColorPicker DefaultFormat="WaxColorPickerFormat.Hsl" DefaultValue="#E8A020" />
                 <WaxColorPicker DefaultFormat="WaxColorPickerFormat.Oklch" DefaultValue="#3A8FA8" />
-            </div>, Icon: "monitor-dot"),
-            new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_formatsCode</code></pre>, Icon: "code")
-        ];
+            </div>
+        </Preview>
+    </DocsSection>
 
-        _presetsTabs =
-        [
-            new("Preview", Content: @<div class="flex flex-wrap items-start gap-8">
+    <DocsSection Title="Presets" Code="@_presetsCode">
+        <Preview>
+            <div class="flex flex-wrap items-start gap-8">
                 <WaxColorPicker Presets="PresetColors" />
                 <WaxColorPicker Variant="WaxColorPickerVariant.Popover" Presets="PresetColors" DefaultValue="#7B5EA7" />
-            </div>, Icon: "monitor-dot"),
-            new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_presetsCode</code></pre>, Icon: "code")
-        ];
+            </div>
+        </Preview>
+    </DocsSection>
 
-        _noAlphaTabs =
-        [
-            new("Preview", Content: @<div class="flex flex-wrap items-start gap-8">
+    <DocsSection Title="Gradients" Code="@_gradientCode">
+        <Preview>
+            <div class="space-y-4">
+                <WaxGradientColorPicker @bind-Value="_boundGradient" ShowCopy="true" />
+                <div class="h-24 rounded-2xl" style="background: @_boundGradient"></div>
+                <p class="font-mono text-sm break-all text-muted-foreground">@_boundGradient</p>
+            </div>
+        </Preview>
+    </DocsSection>
+
+    <DocsSection Title="Gradient Presets" Code="@_gradientPresetsCode">
+        <Preview>
+            <div class="flex flex-wrap items-start gap-8">
+                <WaxGradientColorPicker Presets="MixedPresets" DefaultValue="linear-gradient(135deg, #C4522A 0%, #E8A020 100%)" />
+                <WaxColorPicker Variant="WaxColorPickerVariant.Swatch" Presets="MixedPresets" DefaultValue="linear-gradient(90deg, #3B82F6 0%, #8B5CF6 100%)" />
+            </div>
+        </Preview>
+    </DocsSection>
+
+    <DocsSection Title="Styling Components" Code="@_styledCode">
+        <Preview>
+            <div class="space-y-4">
+                <WaxGradientColorPicker @bind-Value="_styledGradient" ShowCopy="true" />
+                <div class="flex flex-wrap items-center gap-6">
+                    <WaxButton Style="@($"background: {_styledGradient}")">Get started</WaxButton>
+                    <WaxBadge Style="@($"background: {_styledGradient}")">New</WaxBadge>
+                    <div class="rounded-full p-1" style="@($"background: {_styledGradient}")">
+                        <WaxAvatar Name="Ana Souza" />
+                    </div>
+                    <p class="font-display text-3xl font-bold"
+                       style="@($"background: {_styledGradient}; background-clip: text; -webkit-background-clip: text; color: transparent")">
+                        Gradient text
+                    </p>
+                </div>
+            </div>
+        </Preview>
+    </DocsSection>
+
+    <DocsSection Title="Without Alpha" Code="@_noAlphaCode">
+        <Preview>
+            <div class="flex flex-wrap items-start gap-8">
                 <div class="space-y-2">
                     <p class="text-xs uppercase tracking-wide text-muted-foreground">Inline</p>
                     <WaxColorPicker ShowAlpha="false" />
@@ -140,13 +105,13 @@
                     <p class="text-xs uppercase tracking-wide text-muted-foreground">Swatch</p>
                     <WaxColorPicker ShowAlpha="false" Variant="WaxColorPickerVariant.Swatch" DefaultValue="#3A8FA8" />
                 </div>
-            </div>, Icon: "monitor-dot"),
-            new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_noAlphaCode</code></pre>, Icon: "code")
-        ];
+            </div>
+        </Preview>
+    </DocsSection>
 
-        _optionsTabs =
-        [
-            new("Preview", Content: @<div class="flex flex-wrap items-start gap-8">
+    <DocsSection Title="Options" Code="@_optionsCode">
+        <Preview>
+            <div class="flex flex-wrap items-start gap-8">
                 <div class="space-y-2">
                     <p class="text-xs uppercase tracking-wide text-muted-foreground">Copy, no eyedropper</p>
                     <WaxColorPicker ShowCopy="true" ShowEyedropper="false" DefaultValue="#6B9B64" />
@@ -155,26 +120,72 @@
                     <p class="text-xs uppercase tracking-wide text-muted-foreground">Circle swatch</p>
                     <WaxColorPicker Variant="WaxColorPickerVariant.Swatch" SwatchShape="WaxColorPickerSwatchShape.Circle" DefaultValue="#E8A020" />
                 </div>
-            </div>, Icon: "monitor-dot"),
-            new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_optionsCode</code></pre>, Icon: "code")
-        ];
+            </div>
+        </Preview>
+    </DocsSection>
 
-        _disabledTabs =
-        [
-            new("Preview", Content: @<div class="flex flex-wrap items-start gap-8">
+    <DocsSection Title="Disabled" Code="@_disabledCode">
+        <Preview>
+            <div class="flex flex-wrap items-start gap-8">
                 <WaxColorPicker Disabled="true" />
                 <WaxColorPicker Variant="WaxColorPickerVariant.Popover" Disabled="true" />
-            </div>, Icon: "monitor-dot"),
-            new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_disabledCode</code></pre>, Icon: "code")
-        ];
+            </div>
+        </Preview>
+    </DocsSection>
 
-        _boundTabs =
-        [
-            new("Preview", Content: @<div>
+    <DocsSection Title="Bound Value" Code="@_boundCode">
+        <Preview>
+            <div>
                 <WaxColorPicker @bind-Value="_boundColor" ShowCopy="true" />
                 <p class="mt-4 font-mono text-sm text-muted-foreground">@_boundColor</p>
-            </div>, Icon: "monitor-dot"),
-            new("Code", Content: @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@_boundCode</code></pre>, Icon: "code")
-        ];
-    }
+            </div>
+        </Preview>
+    </DocsSection>
+</div>
+
+@code {
+    private string _boundColor = "#3B82F6";
+    private string _boundGradient = "linear-gradient(90deg, #3B82F6 0%, #8B5CF6 100%)";
+    private string _styledGradient = "linear-gradient(90deg, #3B82F6 0%, #8B5CF6 100%)";
+
+    private static readonly string[] PresetColors =
+    [
+        "#C4522A",
+        "#E8A020",
+        "#6B9B64",
+        "#3A8FA8",
+        "#7B5EA7",
+        "#B93A3A",
+        "#2D1B0E",
+    ];
+
+    private static readonly string[] MixedPresets =
+    [
+        "linear-gradient(90deg, #3B82F6 0%, #8B5CF6 100%)",
+        "linear-gradient(135deg, #C4522A 0%, #E8A020 100%)",
+        "radial-gradient(circle, #6B9B64 0%, #2D1B0E 100%)",
+        "conic-gradient(from 45deg, #3A8FA8 0%, #7B5EA7 50%, #3A8FA8 100%)",
+        "#C4522A",
+        "#3A8FA8",
+    ];
+
+    private const string _variantsCode = "@using WaxUI.ColorPicker\n\n<div class=\"flex flex-wrap items-start gap-8\">\n    <WaxColorPicker Variant=\"WaxColorPickerVariant.Inline\" />\n    <WaxColorPicker Variant=\"WaxColorPickerVariant.Popover\" DefaultValue=\"#6B9B64\" />\n    <WaxColorPicker Variant=\"WaxColorPickerVariant.Swatch\" DefaultValue=\"#E8A020\" />\n</div>";
+
+    private const string _formatsCode = "@using WaxUI.ColorPicker\n\n<div class=\"flex flex-wrap items-start gap-8\">\n    <WaxColorPicker DefaultFormat=\"WaxColorPickerFormat.Hex\" />\n    <WaxColorPicker DefaultFormat=\"WaxColorPickerFormat.Rgb\" DefaultValue=\"#C4522A\" />\n    <WaxColorPicker DefaultFormat=\"WaxColorPickerFormat.Hsl\" DefaultValue=\"#E8A020\" />\n    <WaxColorPicker DefaultFormat=\"WaxColorPickerFormat.Oklch\" DefaultValue=\"#3A8FA8\" />\n</div>";
+
+    private const string _presetsCode = "@using WaxUI.ColorPicker\n\n<WaxColorPicker Presets=\"PresetColors\" />\n\n@code {\n    private static readonly string[] PresetColors =\n    [\n        \"#C4522A\", \"#E8A020\", \"#6B9B64\",\n        \"#3A8FA8\", \"#7B5EA7\", \"#B93A3A\",\n    ];\n}";
+
+    private const string _noAlphaCode = "@using WaxUI.ColorPicker\n\n<!-- Opaque output: alpha slider and channel hidden, values stay 6-digit -->\n<div class=\"flex flex-wrap items-start gap-8\">\n    <WaxColorPicker ShowAlpha=\"false\" />\n    <WaxColorPicker ShowAlpha=\"false\" Variant=\"WaxColorPickerVariant.Popover\" DefaultValue=\"#C4522A\" />\n    <WaxColorPicker ShowAlpha=\"false\" Variant=\"WaxColorPickerVariant.Swatch\" DefaultValue=\"#3A8FA8\" />\n</div>";
+
+    private const string _gradientCode = "@using WaxUI.ColorPicker\n\n<!-- The gradient picker starts from the value gradient;\n     drag handles to reposition stops, click the track to add one, edit the\n     selected stop below, switch linear/radial/conic, and remove with the trash icon -->\n<div class=\"space-y-4\">\n    <WaxGradientColorPicker @bind-Value=\"_gradient\" ShowCopy=\"true\" />\n    <div class=\"h-24 rounded-2xl\" style=\"background: @_gradient\"></div>\n    <p class=\"font-mono text-sm break-all text-muted-foreground\">@_gradient</p>\n</div>\n\n@code {\n    private string _gradient = \"linear-gradient(90deg, #3B82F6 0%, #8B5CF6 100%)\";\n}";
+
+    private const string _gradientPresetsCode = "@using WaxUI.ColorPicker\n\n<!-- Presets accept solid colors and gradient strings side by side -->\n<div class=\"flex flex-wrap items-start gap-8\">\n    <WaxGradientColorPicker Presets=\"MixedPresets\" DefaultValue=\"linear-gradient(135deg, #C4522A 0%, #E8A020 100%)\" />\n    <WaxColorPicker Variant=\"WaxColorPickerVariant.Swatch\" Presets=\"MixedPresets\" DefaultValue=\"linear-gradient(90deg, #3B82F6 0%, #8B5CF6 100%)\" />\n</div>\n\n@code {\n    private static readonly string[] MixedPresets =\n    [\n        \"linear-gradient(90deg, #3B82F6 0%, #8B5CF6 100%)\",\n        \"linear-gradient(135deg, #C4522A 0%, #E8A020 100%)\",\n        \"radial-gradient(circle, #6B9B64 0%, #2D1B0E 100%)\",\n        \"conic-gradient(from 45deg, #3A8FA8 0%, #7B5EA7 50%, #3A8FA8 100%)\",\n        \"#C4522A\",\n        \"#3A8FA8\",\n    ];\n}";
+
+    private const string _styledCode = "@using WaxUI.Avatar\n@using WaxUI.Badge\n@using WaxUI.Button\n@using WaxUI.ColorPicker\n\n<!-- The value is any CSS background; bind it and apply it as inline style -->\n<div class=\"space-y-4\">\n    <WaxGradientColorPicker @bind-Value=\"_theme\" ShowCopy=\"true\" />\n\n    <div class=\"flex flex-wrap items-center gap-6\">\n        <WaxButton Style=\"@($\"background: {_theme}\")\">Get started</WaxButton>\n        <WaxBadge Style=\"@($\"background: {_theme}\")\">New</WaxBadge>\n        <div class=\"rounded-full p-1\" style=\"@($\"background: {_theme}\")\">\n            <WaxAvatar Name=\"Ana Souza\" />\n        </div>\n        <p class=\"font-display text-3xl font-bold\"\n           style=\"@($\"background: {_theme}; background-clip: text; -webkit-background-clip: text; color: transparent\")\">\n            Gradient text\n        </p>\n    </div>\n</div>\n\n@code {\n    private string _theme = \"linear-gradient(90deg, #3B82F6 0%, #8B5CF6 100%)\";\n}";
+
+    private const string _optionsCode = "@using WaxUI.ColorPicker\n\n<div class=\"flex flex-wrap items-start gap-8\">\n    <!-- Copy value, no eyedropper -->\n    <WaxColorPicker ShowCopy=\"true\" ShowEyedropper=\"false\" DefaultValue=\"#6B9B64\" />\n\n    <!-- Circle swatch trigger -->\n    <WaxColorPicker Variant=\"WaxColorPickerVariant.Swatch\" SwatchShape=\"WaxColorPickerSwatchShape.Circle\" DefaultValue=\"#E8A020\" />\n</div>";
+
+    private const string _disabledCode = "@using WaxUI.ColorPicker\n\n<div class=\"flex flex-wrap items-start gap-8\">\n    <WaxColorPicker Disabled=\"true\" />\n    <WaxColorPicker Variant=\"WaxColorPickerVariant.Popover\" Disabled=\"true\" />\n</div>";
+
+    private const string _boundCode = "@using WaxUI.ColorPicker\n\n<div>\n    <WaxColorPicker @bind-Value=\"_color\" ShowCopy=\"true\" />\n    <p class=\"mt-4 font-mono text-sm text-muted-foreground\">@_color</p>\n</div>\n\n@code {\n    private string _color = \"#3B82F6\";\n}";
 }

@@ -50,10 +50,17 @@ utilities the app renders. Blazor Server apps can serve it from an endpoint inst
 <WaxBadge Color="WaxColor.Primary">New</WaxBadge>
 
 <WaxSwitch Label="Dark mode" />
+
+<!-- Solid color picker; WaxGradientColorPicker renders CSS gradients
+     (linear/radial/conic) with multiple draggable stops -->
+<WaxColorPicker @bind-Value="_color" ShowCopy="true" />
+<WaxColorPicker />
+<WaxGradientColorPicker DefaultValue="linear-gradient(90deg, #3B82F6 0%, #8B5CF6 100%)" />
 ```
 
 ```csharp
 private void OnClick() { }
+private string _color = "#3B82F6";
 ```
 
 ### Custom colors

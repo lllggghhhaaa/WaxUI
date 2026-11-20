@@ -1,0 +1,565 @@
+@using LucideBlazor
+@using Microsoft.JSInterop
+@using WaxUI.IconButton
+@using WaxUI.Slider
+@inherits WaxColorPickerBase
+
+<div class="@WrapperClass" style="@Style" @attributes="AdditionalAttributes">
+    @if (Name is { Length: > 0 })
+    {
+        <input type="hidden" name="@Name" value="@CurrentValue" />
+    }
+
+    @if (Variant != WaxColorPickerVariant.Inline)
+    {
+        <button type="button"
+                class="@TriggerClass"
+                disabled="@Disabled"
+                aria-haspopup="dialog"
+                aria-expanded="@Aria(IsOpen)"
+                aria-label="@($"{Label}: {FormattedValue}")"
+                @onclick="ToggleOpenAsync"
+                @onkeydown="OnTriggerKeyDownAsync"
+                @ref="_triggerRef">
+            <span class="@TriggerSwatchClass" style="@TriggerSwatchStyle"></span>
+            @if (Variant == WaxColorPickerVariant.Popover)
+            {
+                <span class="min-w-0 flex-1 truncate font-medium tracking-tight">@FormattedValue</span>
+                <LucideIcon Name="chevron-down" Size="16" ClassName="@TriggerChevronClass" />
+            }
+        </button>
+
+        @if (IsOpen)
+        {
+            <div class="@WaxColorPickerStyles.ClickAway" aria-hidden="true" @onclick="CloseOpenAsync"></div>
+        }
+    }
+
+    @if (PanelVisible)
+    {
+        <fieldset class="@PanelClass"
+                  role="@(Variant == WaxColorPickerVariant.Inline ? null : "dialog")"
+                  aria-label="@Label"
+                  disabled="@Disabled"
+                  @onkeydown="OnPanelKeyDownAsync">
+
+            @if (Presets is not null)
+            {
+                <WaxColorPickerPresets Values="@Presets"
+                                       AllowGradients="true"
+                                       SwatchShape="@SwatchShape"
+                                       OnSelect="SelectPresetAsync" />
+            }
+
+            @* Gradient preview, draggable stops and type/angle controls *@
+            <div class="mb-3 space-y-2">
+                <div @ref="_trackRef"
+                     class="@TrackClass"
+                     @onpointerdown="OnTrackPointerDownAsync"
+                     @onpointermove="OnTrackPointerMove"
+                     @onpointerup="OnTrackPointerUpAsync"
+                     @onpointercancel="OnTrackPointerUpAsync"
+                     @oncontextmenu="OnTrackContextMenuAsync"
+                     @oncontextmenu:preventDefault>
+
+                    <div class="@WaxColorPickerStyles.GradientBar @WaxColorPickerStyles.AlphaChecker"></div>
+
+                    <div class="@WaxColorPickerStyles.GradientBar"
+                         style="@($"background-image: {GradientTrackImage}")"></div>
+
+                    @foreach (var entry in SortedStops)
+                    {
+                        <button type="button"
+                                @key="entry.Index"
+                                class="@StopHandleClass(entry.Index)"
+                                style="@($"left: {FormatNumber(entry.Stop.Position)}%; background-color: {StopHex(entry.Stop)}")"
+                                tabindex="@(Disabled ? -1 : 0)"
+                                aria-label="@($"Stop {entry.Index + 1}: {StopHex(entry.Stop)} at {FormatNumber(entry.Stop.Position)}%")"
+                                aria-pressed="@Aria(entry.Index == _selectedStop)"
+                                @onkeydown="e => OnStopKeyDownAsync(entry.Index, e)"
+                                @oncontextmenu="() => RemoveStopAtAsync(entry.Index)"
+                                @oncontextmenu:preventDefault
+                                @oncontextmenu:stopPropagation></button>
+                    }
+                </div>
+
+                <div class="flex items-center justify-between gap-2">
+                    <div role="group"
+                         aria-label="Gradient type"
+                         class="@WaxColorPickerStyles.SegmentGroup">
+                        @foreach (var gradientType in GradientTypes)
+                        {
+                            <button type="button"
+                                    @key="gradientType"
+                                    class="@SegmentClass(gradientType == _gradientType)"
+                                    aria-pressed="@Aria(gradientType == _gradientType)"
+                                    disabled="@Disabled"
+                                    @onclick="() => SelectGradientTypeAsync(gradientType)">
+                                @gradientType
+                            </button>
+                        }
+                    </div>
+
+                    <WaxIconButton Size="WaxIconButtonSize.XSmall"
+                                   Disabled="@(Disabled || _stops.Count <= 2)"
+                                   Title="Remove selected stop"
+                                   OnClick="RemoveSelectedStopAsync">
+                        <LucideIcon Name="trash" Size="14"/>
+                    </WaxIconButton>
+                </div>
+
+                @if (_gradientType != WaxGradientType.Radial)
+                {
+                    <div class="flex items-center gap-3 px-1">
+                        <span class="shrink-0 text-xs text-muted-foreground">
+                            Angle
+                        </span>
+
+                        <WaxSlider Class="min-w-0 flex-1"
+                                   Min="0"
+                                   Max="360"
+                                   Step="1"
+                                   ShowValue="false"
+                                   Disabled="@Disabled"
+                                   Value="@_gradientAngle"
+                                   ValueChanged="OnGradientAngleInput"
+                                   OnCommitted="CommitGradientAngleAsync"
+                                   ThumbStyle="@SliderThumbOverride"/>
+
+                        <span class="w-10 shrink-0 text-right text-xs font-medium tabular-nums text-muted-foreground">
+                            @FormatNumber(_gradientAngle)°
+                        </span>
+                    </div>
+                }
+            </div>
+
+            <WaxColorPickerPalette Hue="@_pickerH"
+                                   Saturation="@_pickerS"
+                                   Value="@_pickerV"
+                                   Alpha="@_alpha"
+                                   ShowAlpha="@ShowAlpha"
+                                   Disabled="@Disabled"
+                                   OnInput="OnPaletteInputAsync"
+                                   OnCommit="OnPaletteCommitAsync"
+                                   OnEditingChanged="SetEditing" />
+
+            <WaxColorPickerFooter Format="@Format"
+                                  Disabled="@Disabled"
+                                  ShowCopy="@ShowCopy"
+                                  ShowEyedropper="@ShowEyedropper"
+                                  CopyValue="@FormattedValue"
+                                  FormatChanged="SelectFormatAsync"
+                                  EyedropperPicked="OnEyedropperPickedAsync"
+                                  OnEyedropperUnsupported="OnEyedropperUnsupported" />
+
+            <div class="relative z-10 mt-2 flex items-start gap-2 text-foreground">
+                @ChannelTemplate(PositionChannel)
+
+                @if (Format == WaxColorPickerFormat.Hex)
+                {
+                    <div class="@WaxColorPickerStyles.HexField">
+                        <div class="flex min-w-0 items-center justify-center gap-1.5">
+                            <span class="@SwatchClass("h-5 w-5")" style="@($"background-color: {ColorValue}")"></span>
+                            <div class="flex min-w-0 items-center justify-center gap-0.5">
+                                <span class="shrink-0 text-base font-light text-muted-foreground">#</span>
+                                <input type="text"
+                                       spellcheck="false"
+                                       class="@HexInputClass"
+                                       disabled="@Disabled"
+                                       aria-label="Hex color"
+                                       value="@HexDisplayValue"
+                                       @ref="_hexInputRef"
+                                       @onfocus="OnHexFocus"
+                                       @oninput="OnHexInputAsync"
+                                       @onblur="OnHexBlurAsync"
+                                       @onkeydown="OnHexKeyDownAsync" />
+                            </div>
+                        </div>
+                        @if (_hexInvalid)
+                        {
+                            <p class="mt-1 text-xs text-destructive">Enter a valid hex color.</p>
+                        }
+                    </div>
+                }
+                else
+                {
+                    @foreach (var channel in FormatChannels())
+                    {
+                        @ChannelTemplate(channel)
+                    }
+                }
+
+                @if (ShowAlpha)
+                {
+                    @ChannelTemplate(AlphaChannel)
+                }
+            </div>
+        </fieldset>
+    }
+</div>
+
+@code {
+    private const string SliderThumbOverride = "background-color: #ffffff; border-color: rgba(0, 0, 0, 0.1);";
+
+    private static readonly WaxGradientType[] GradientTypes =
+    [
+        WaxGradientType.Linear,
+        WaxGradientType.Radial,
+        WaxGradientType.Conic,
+    ];
+
+    private WaxGradientType _gradientType = WaxGradientType.Linear;
+    private double _gradientAngle = 90;
+    private List<WaxGradientMath.GradientStop> _stops = [];
+    private int _selectedStop;
+
+    private ElementReference _trackRef;
+    private bool _draggingTrack;
+    private long _trackPointerUps;
+    private Rect _trackRect;
+    private bool _trackWasRendered;
+
+    /// <summary>Gradient type used when a plain color seeds the gradient.</summary>
+    [Parameter] public WaxGradientType DefaultGradientType { get; set; } = WaxGradientType.Linear;
+
+    /// <summary>Gradient angle in degrees used when a plain color seeds the gradient.</summary>
+    [Parameter] public double DefaultGradientAngle { get; set; } = 90;
+
+    protected override string CurrentValue =>
+        WaxGradientMath.FormatGradient(_gradientType, _gradientAngle, _stops);
+
+    protected override string FormattedValue => CurrentValue;
+
+    protected override string TriggerSwatchStyle => $"background-image: {GradientTrackImage}";
+
+    protected override bool DisplayTranslucent =>
+        _stops.Any(stop => (ShowAlpha ? stop.AlphaPercent : 100) < 100);
+
+    private string GradientTrackImage => $"linear-gradient(to right, {WaxGradientMath.FormatStopList(_stops)})";
+
+    private List<(int Index, WaxGradientMath.GradientStop Stop)> SortedStops =>
+        _stops.Select((stop, index) => (Index: index, Stop: stop)).OrderBy(entry => entry.Stop.Position).ToList();
+
+    private Channel PositionChannel =>
+        new("Position", _stops[_selectedStop].Position, 100, OnStopPositionAsync, "%");
+
+    private string TrackClass => Cn.Of(
+        WaxColorPickerStyles.GradientTrack,
+        Disabled ? "pointer-events-none opacity-60" : null).Value;
+
+    private KhamsinClass SegmentClass(bool active) => Cn.Of(
+        WaxColorPickerStyles.SegmentButton,
+        active ? WaxColorPickerStyles.SegmentButtonActive : null);
+
+    private KhamsinClass StopHandleClass(int index) => Cn.Of(
+        WaxColorPickerStyles.StopHandle,
+        index == _selectedStop ? WaxColorPickerStyles.StopHandleActive : null);
+
+    private string StopHex(WaxGradientMath.GradientStop stop) =>
+        WaxColorMath.FormatHex(stop.Rgb, ShowAlpha ? stop.AlphaPercent : 100);
+
+    /// <summary>A gradient string is loaded as-is; a plain color seeds a flat gradient.</summary>
+    protected override void LoadSource(string source)
+    {
+        if (WaxGradientMath.ParseGradient(source) is { } gradient)
+        {
+            ApplyGradient(gradient.Type, gradient.Angle, gradient.Stops);
+            return;
+        }
+
+        var parsed = WaxColorMath.ParseHexColor(source) ?? new WaxColorMath.ParsedHexColor(WaxColorMath.DefaultRgb, null);
+        SetSolidColor(parsed.Rgb, ShowAlpha ? parsed.AlphaPercent ?? WaxColorMath.ClampPercent(DefaultAlpha) : 100);
+        SeedGradientFromSolid();
+    }
+
+    protected override bool CoerceOpaque()
+    {
+        var coerced = base.CoerceOpaque();
+        if (ShowAlpha || _stops.All(stop => stop.AlphaPercent == 100))
+        {
+            return coerced;
+        }
+
+        _stops = _stops.Select(stop => stop with { AlphaPercent = 100 }).ToList();
+        return true;
+    }
+
+    protected override void SyncActiveColor()
+    {
+        if (_stops.Count == 0) return;
+
+        _selectedStop = Math.Clamp(_selectedStop, 0, _stops.Count - 1);
+        _stops[_selectedStop] = _stops[_selectedStop] with { Rgb = _rgb, AlphaPercent = EffectiveAlpha };
+    }
+
+    /// <summary>Gradient presets replace the whole gradient; solid presets color the selected stop.</summary>
+    protected override async Task SelectPresetAsync(string rawValue)
+    {
+        if (WaxGradientMath.ParseGradient(rawValue) is { } gradient)
+        {
+            ApplyGradient(gradient.Type, gradient.Angle, gradient.Stops);
+            await EmitAsync(EmitMode.Commit);
+            return;
+        }
+
+        await ApplyHexAsync(rawValue, EmitMode.Commit);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        var trackMounted = PanelVisible && !_trackWasRendered;
+
+        // Set before awaiting so an overlapping render cannot install the guard twice.
+        _trackWasRendered = PanelVisible;
+
+        if (!trackMounted || _jsInterop is null) return;
+
+        try
+        {
+            await _jsInterop.InvokeAsync<object?>("preventArrowKeyScroll", _trackRef);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (TaskCanceledException)
+        {
+        }
+    }
+
+    private void ApplyGradient(WaxGradientType type, double angle, List<WaxGradientMath.GradientStop> stops)
+    {
+        // A gradient without stops would break every index/Clamp below; fall back to a flat one.
+        if (stops.Count == 0)
+        {
+            stops = WaxGradientMath.SolidStops(_rgb, EffectiveAlpha);
+        }
+
+        _gradientType = type;
+        _gradientAngle = angle;
+        _stops = ShowAlpha ? stops : stops.Select(stop => stop with { AlphaPercent = 100 }).ToList();
+        _selectedStop = 0;
+        LoadActiveFromSelectedStop();
+    }
+
+    private void SeedGradientFromSolid() =>
+        ApplyGradient(
+            DefaultGradientType,
+            WaxColorMath.NormalizeHue(DefaultGradientAngle),
+            WaxGradientMath.SolidStops(_rgb, EffectiveAlpha));
+
+    private void LoadActiveFromSelectedStop()
+    {
+        _selectedStop = Math.Clamp(_selectedStop, 0, _stops.Count - 1);
+        var stop = _stops[_selectedStop];
+        _rgb = stop.Rgb;
+        _alpha = ShowAlpha ? stop.AlphaPercent : 100;
+        SyncPickerFromRgb(_rgb);
+    }
+
+    private void SelectStop(int index)
+    {
+        if (index < 0 || index >= _stops.Count) return;
+
+        _selectedStop = index;
+        LoadActiveFromSelectedStop();
+    }
+
+    private async Task SelectGradientTypeAsync(WaxGradientType type)
+    {
+        if (Disabled || type == _gradientType) return;
+
+        _gradientType = type;
+        await EmitAsync(EmitMode.Commit);
+    }
+
+    private void OnGradientAngleInput(double angle) => _gradientAngle = WaxColorMath.NormalizeHue(angle);
+
+    private Task CommitGradientAngleAsync(double angle)
+    {
+        OnGradientAngleInput(angle);
+        return EmitAsync(EmitMode.Commit);
+    }
+
+    private Task SetStopPositionAsync(int index, double position)
+    {
+        _stops[index] = _stops[index] with { Position = Math.Clamp(Math.Round(position, 2), 0, 100) };
+        return EmitAsync(EmitMode.Commit);
+    }
+
+    private Task OnStopPositionAsync(double position) =>
+        Disabled ? Task.CompletedTask : SetStopPositionAsync(_selectedStop, position);
+
+    private Task RemoveSelectedStopAsync() => RemoveStopAtAsync(_selectedStop);
+
+    private Task RemoveStopAtAsync(int index)
+    {
+        if (Disabled || _stops.Count <= 2 || index < 0 || index >= _stops.Count)
+        {
+            return Task.CompletedTask;
+        }
+
+        var wasSelected = index == _selectedStop;
+        _stops.RemoveAt(index);
+        _selectedStop = wasSelected ? index : index < _selectedStop ? _selectedStop - 1 : _selectedStop;
+        LoadActiveFromSelectedStop();
+        return EmitAsync(EmitMode.Commit);
+    }
+
+    private Task OnStopKeyDownAsync(int index, KeyboardEventArgs e)
+    {
+        if (Disabled || index < 0 || index >= _stops.Count)
+        {
+            return Task.CompletedTask;
+        }
+
+        var step = e.ShiftKey ? 5 : 1;
+        var position = _stops[index].Position;
+
+        switch (e.Key)
+        {
+            case "ArrowLeft":
+                SelectStop(index);
+                return SetStopPositionAsync(index, position - step);
+
+            case "ArrowRight":
+                SelectStop(index);
+                return SetStopPositionAsync(index, position + step);
+
+            case "Home":
+                SelectStop(index);
+                return SetStopPositionAsync(index, 0);
+
+            case "End":
+                SelectStop(index);
+                return SetStopPositionAsync(index, 100);
+
+            case "Enter" or " ":
+                SelectStop(index);
+                return Task.CompletedTask;
+
+            case "Delete" or "Backspace":
+                return RemoveStopAtAsync(index);
+
+            default:
+                return Task.CompletedTask;
+        }
+    }
+
+    // Gradient track pointer handling ---------------------------------------------------------
+
+    private async Task<Rect?> BeginDragAsync(ElementReference element, long pointerId)
+    {
+        if (_jsInterop is null) return null;
+
+        var rect = await _jsInterop.InvokeAsync<Rect>("beginPointerDrag", element, pointerId);
+        return rect.Width > 0 && rect.Height > 0 ? rect : null;
+    }
+
+    private async Task OnTrackPointerDownAsync(PointerEventArgs e)
+    {
+        // Only the primary button starts a drag / adds a stop; right-click removes instead.
+        if (Disabled || e.Button != 0) return;
+
+        var upsAtStart = _trackPointerUps;
+        if (await BeginDragAsync(_trackRef, e.PointerId) is not { } rect) return;
+
+        _trackRect = rect;
+
+        var position = TrackPosition(e.ClientX);
+        var hit = FindStopAt(position);
+        if (hit >= 0)
+        {
+            SelectStop(hit);
+        }
+        else
+        {
+            var (rgb, alphaPercent) = WaxGradientMath.InterpolateColor(_stops, position);
+            _stops.Add(new WaxGradientMath.GradientStop(rgb, ShowAlpha ? alphaPercent : 100, Math.Round(position, 2)));
+            _selectedStop = _stops.Count - 1;
+            LoadActiveFromSelectedStop();
+        }
+
+        UpdateDraggedStop(position);
+
+        if (_trackPointerUps != upsAtStart)
+        {
+            await EmitAsync(EmitMode.Commit);
+            return;
+        }
+
+        _draggingTrack = true;
+        SetEditing(true);
+    }
+
+    private void OnTrackPointerMove(PointerEventArgs e)
+    {
+        if (_draggingTrack && !Disabled) UpdateDraggedStop(TrackPosition(e.ClientX));
+    }
+
+    private async Task OnTrackPointerUpAsync(PointerEventArgs e)
+    {
+        _trackPointerUps++;
+        if (!_draggingTrack) return;
+
+        _draggingTrack = false;
+        SetEditing(false);
+        await EmitAsync(EmitMode.Commit);
+    }
+
+    /// <summary>Right-click on the track removes the nearest stop within the hit radius (menu is suppressed).</summary>
+    private async Task OnTrackContextMenuAsync(MouseEventArgs e)
+    {
+        if (Disabled || _jsInterop is null) return;
+
+        var rect = await _jsInterop.InvokeAsync<Rect>("measureRect", _trackRef);
+        if (rect.Width <= 0) return;
+
+        _trackRect = rect;
+
+        var hit = FindStopAt(TrackPosition(e.ClientX));
+        if (hit >= 0)
+        {
+            await RemoveStopAtAsync(hit);
+        }
+    }
+
+    private double TrackPosition(double clientX) =>
+        Math.Clamp((clientX - _trackRect.Left) / _trackRect.Width * 100, 0, 100);
+
+    private int FindStopAt(double position)
+    {
+        const double hitRadius = 3;
+
+        var best = -1;
+        var bestDistance = double.MaxValue;
+        for (var i = 0; i < _stops.Count; i++)
+        {
+            var distance = Math.Abs(_stops[i].Position - position);
+            if (distance <= hitRadius && distance < bestDistance)
+            {
+                best = i;
+                bestDistance = distance;
+            }
+        }
+
+        return best;
+    }
+
+    private void UpdateDraggedStop(double position)
+    {
+        _stops[_selectedStop] = _stops[_selectedStop] with { Position = Math.Round(position, 2) };
+        SyncActiveColor();
+    }
+
+    private RenderFragment<Channel> ChannelTemplate => channel =>
+        @<WaxColorChannelInput @key="channel.Label"
+                               Label="@channel.Label"
+                               Suffix="@channel.Suffix"
+                               Min="0"
+                               Max="@channel.Max"
+                               Disabled="@Disabled"
+                               Value="@channel.Value"
+                               ValueChanged="@channel.OnChange"
+                               OnEditStart="BeginEdit"
+                               OnEditEnd="EndEdit" />;
+}
