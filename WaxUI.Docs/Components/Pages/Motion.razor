@@ -1,0 +1,160 @@
+@page "/motion"
+@rendermode InteractiveServer
+@using WaxUI.Accordion
+@using WaxUI.Alert
+@using WaxUI.Button
+@using WaxUI.Dialog
+@using WaxUI.Progress
+@inject IWaxAlertService Alerts
+
+<PageTitle>Motion - WaxUI</PageTitle>
+
+<div class="mb-8">
+    <h1 class="text-3xl font-display font-bold text-foreground mb-2">Motion</h1>
+    <p class="text-muted-foreground">The library's shared motion vocabulary. Four principles hold across every component: <b>fast in, faster out</b> (surfaces appear in 150-200ms and leave in 150ms with an accelerating curve); <b>transform and opacity only</b> (nothing animates layout properties, except the accordion's grid-rows trick); <b>directional</b> (dropdowns drop from their trigger, toasts travel toward the edge they stack against); and <b>reducible</b> (<code>prefers-reduced-motion</code> collapses everything centrally in app.css, with no per-component guards). Components draw timings from <code>WaxUI.Utils.WaxMotion</code> and curves from the <code>ease-emphasized</code> tokens in khamsin.json.</p>
+</div>
+
+<div class="space-y-6">
+    <DocsSection Title="Duration scale" Code="@_durationsCode">
+        <Preview>
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left text-muted-foreground">
+                        <th class="py-2 pr-4 font-medium">Classes</th>
+                        <th class="py-2 pr-4 font-medium">Use for</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="border-t border-border">
+                        <td class="py-2 pr-4 font-mono text-xs whitespace-nowrap">duration-150 ease-emphasized</td>
+                        <td class="py-2 pr-4">Fast: panel entrances, hover states, dropdown rows, check marks</td>
+                    </tr>
+                    <tr class="border-t border-border">
+                        <td class="py-2 pr-4 font-mono text-xs whitespace-nowrap">duration-200 ease-emphasized</td>
+                        <td class="py-2 pr-4">Base: buttons, dialog enter, floating labels</td>
+                    </tr>
+                    <tr class="border-t border-border">
+                        <td class="py-2 pr-4 font-mono text-xs whitespace-nowrap">duration-300 ease-emphasized</td>
+                        <td class="py-2 pr-4">Slow: accordion bodies, switch travel, card lift</td>
+                    </tr>
+                    <tr class="border-t border-border">
+                        <td class="py-2 pr-4 font-mono text-xs whitespace-nowrap">duration-500 / duration-700</td>
+                        <td class="py-2 pr-4">Progress fills only</td>
+                    </tr>
+                    <tr class="border-t border-border">
+                        <td class="py-2 pr-4 font-mono text-xs whitespace-nowrap">duration-150 ease-emphasized-accelerate</td>
+                        <td class="py-2 pr-4">Exits: dialog close, toast dismissal</td>
+                    </tr>
+                </tbody>
+            </table>
+        </Preview>
+    </DocsSection>
+
+    <DocsSection Title="Easing curves" Code="@_easingCode">
+        <Preview>
+            <div class="space-y-4">
+                <WaxButton Variant="WaxButtonVariant.Filled" OnClick="() => _ping = !_ping">Run</WaxButton>
+                @foreach (var demo in EasingDemos)
+                {
+                    <div class="flex items-center gap-4">
+                        <span class="w-64 shrink-0 font-mono text-xs text-muted-foreground">@demo.Name</span>
+                        <div class="relative h-8 flex-1 rounded-full bg-muted overflow-hidden">
+                            <div class="@($"h-full rounded-full bg-primary transition-all duration-700 {demo.Ease}")"
+                                 style="@($"width: {BarWidth};")"></div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </Preview>
+    </DocsSection>
+
+    <DocsSection Title="Overlays: enter and exit" Code="@_overlaysCode">
+        <Preview>
+            <div class="flex flex-wrap items-center gap-4">
+                <WaxButton Variant="WaxButtonVariant.Filled" OnClick="() => _dialogOpen = true">Open dialog</WaxButton>
+                <WaxButton Variant="WaxButtonVariant.Tonal" OnClick="ShowToast">Show toast</WaxButton>
+            </div>
+            <p class="mt-4 text-sm text-muted-foreground">The dialog card scales and fades in while the backdrop fades; closing plays the accelerated exit before the element is released. The toast rises toward the stack edge and slides back out on dismissal.</p>
+        </Preview>
+    </DocsSection>
+
+    <DocsSection Title="Accordion: full-height bodies" Code="@_accordionCode">
+        <Preview>
+            <WaxAccordion Items="AccordionItems" DefaultOpenIndex="-1" />
+        </Preview>
+    </DocsSection>
+
+    <DocsSection Title="Indeterminate progress" Code="@_progressCode">
+        <Preview>
+            <div class="max-w-sm space-y-4">
+                <div class="space-y-2">
+                    <p class="text-xs uppercase tracking-wide text-muted-foreground">Indeterminate</p>
+                    <WaxProgressBar Indeterminate />
+                </div>
+                <div class="space-y-2">
+                    <p class="text-xs uppercase tracking-wide text-muted-foreground">Determinate</p>
+                    <WaxProgressBar Value="65" />
+                </div>
+            </div>
+        </Preview>
+    </DocsSection>
+
+    <div class="p-6 rounded-3xl bg-card border border-border">
+        <h3 class="font-semibold text-foreground mb-2">Reduced motion</h3>
+        <p class="m-0 text-sm text-muted-foreground">app.css guards <code>prefers-reduced-motion: reduce</code> once for the whole library: animation and transition durations collapse to 0.01ms and looping animations (the OTP caret, the indeterminate sweep) settle on their end state. Components and apps never need their own media queries; JS-driven exits (the dialog) observe the same collapse because they wait for the real animations to finish.</p>
+    </div>
+</div>
+
+<WaxDialog Open="_dialogOpen"
+           OnClosed="() => _dialogOpen = false"
+           Title="Motion demo"
+           ConfirmText="Close"
+           CancelText="Cancel"
+           OnConfirm="() => _dialogOpen = false">
+    <ChildContent>
+        <p class="m-0 text-sm text-muted-foreground">The card scales and fades in while the backdrop fades with it. Press confirm, cancel or Escape — the exit animation plays before the dialog is closed.</p>
+    </ChildContent>
+</WaxDialog>
+
+@code {
+    private bool _ping;
+    private bool _dialogOpen;
+
+    private string BarWidth => _ping ? "100%" : "12%";
+
+    private sealed record EasingDemo(string Name, string Ease);
+
+    private static readonly EasingDemo[] EasingDemos =
+    [
+        new("ease-out (built-in default)", "ease-out"),
+        new("ease-emphasized (entrances)", "ease-emphasized"),
+        new("ease-emphasized-accelerate (exits)", "ease-emphasized-accelerate"),
+    ];
+
+    private static readonly List<WaxAccordionItemData> AccordionItems =
+    [
+        new()
+        {
+            Title = "Tall body",
+            Body = (MarkupString)"The body animates at its real content height via the grid-template-rows 0fr → 1fr transition — a fixed max-height would clip this paragraph mid-animation. The chevron rotates on the same 300ms curve, and the text fades with the reveal.",
+        },
+        new()
+        {
+            Title = "Second row",
+            Body = (MarkupString)"Rows highlight on open with a fast color transition; only one row can be open at a time.",
+        },
+    ];
+
+    private void ShowToast() =>
+        Alerts.Success("Dismiss me — the toast slides back toward the edge it stacked against.");
+
+    private const string _durationsCode = "<!-- Durations stay on Khamsin's built-in scale: 150 fast, 200 base, 300 slow.\n     Curves come from the two named eases in WaxUI's khamsin.json. -->\n<div class=\"rounded-2xl border border-border p-4 transition-all duration-200 ease-emphasized hover:bg-muted/40\">\n    <p class=\"m-0 text-sm\">200ms emphasized transition on hover.</p>\n</div>";
+
+    private const string _easingCode = "@using WaxUI.Button\n\n<!-- Same duration, same element - only the easing differs -->\n<div class=\"space-y-4\">\n    <WaxButton Variant=\"WaxButtonVariant.Filled\" OnClick=\"() => _ping = !_ping\">Run</WaxButton>\n\n    <div class=\"relative h-8 rounded-full bg-muted overflow-hidden\">\n        <div class=\"h-full rounded-full bg-primary transition-all duration-700 ease-out\"\n             style=\"width: @(_ping ? \"100%\" : \"12%\")\"></div>\n    </div>\n    <div class=\"relative h-8 rounded-full bg-muted overflow-hidden\">\n        <div class=\"h-full rounded-full bg-primary transition-all duration-700 ease-emphasized\"\n             style=\"width: @(_ping ? \"100%\" : \"12%\")\"></div>\n    </div>\n    <div class=\"relative h-8 rounded-full bg-muted overflow-hidden\">\n        <div class=\"h-full rounded-full bg-primary transition-all duration-700 ease-emphasized-accelerate\"\n             style=\"width: @(_ping ? \"100%\" : \"12%\")\"></div>\n    </div>\n</div>\n\n@code {\n    private bool _ping;\n}";
+
+    private const string _overlaysCode = "@using WaxUI.Alert\n@using WaxUI.Button\n@using WaxUI.Dialog\n\n<div class=\"flex flex-wrap items-center gap-4\">\n    <WaxButton Variant=\"WaxButtonVariant.Filled\" OnClick=\"() => _dialogOpen = true\">Open dialog</WaxButton>\n    <WaxButton Variant=\"WaxButtonVariant.Tonal\" OnClick=\"ShowToast\">Show toast</WaxButton>\n</div>\n\n<WaxDialog Open=\"_dialogOpen\" OnClosed=\"() => _dialogOpen = false\"\n           Title=\"Motion demo\" ConfirmText=\"Close\" CancelText=\"Cancel\"\n           OnConfirm=\"() => _dialogOpen = false\">\n    <ChildContent>\n        <p class=\"m-0 text-sm text-muted-foreground\">Entrances and exits run on the shared curves.</p>\n    </ChildContent>\n</WaxDialog>\n\n@code {\n    private bool _dialogOpen;\n\n    [Inject] private IWaxAlertService Alerts { get; set; } = default!;\n\n    private void ShowToast() => Alerts.Success(\"Saved.\");\n}";
+
+    private const string _accordionCode = "@using WaxUI.Accordion\n\n<!-- Bodies animate at their real content height (grid-template-rows 0fr -> 1fr);\n     no fixed max-height, so nothing gets clipped. -->\n<WaxAccordion Items=\"Items\" />\n\n@code {\n    private static readonly List<WaxAccordionItemData> Items =\n    [\n        new() { Title = \"Tall body\", Body = (MarkupString)\"...\" },\n    ];\n}";
+
+    private const string _progressCode = "@using WaxUI.Progress\n\n<WaxProgressBar Indeterminate />\n<WaxProgressBar Value=\"65\" />";
+}

@@ -1,0 +1,32 @@
+@using WaxUI.Tabs
+
+<div class="p-6 rounded-3xl bg-card border border-border">
+    <h3 class="font-semibold text-foreground mb-1">@Title</h3>
+    @Description
+    <WaxTab Variant="WaxTabVariant.Primary" Tabs="_tabs" TabListClass="mb-4" />
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public RenderFragment Preview { get; set; } = null!;
+    [Parameter, EditorRequired] public string Code { get; set; } = string.Empty;
+
+    /// <summary>Optional note rendered between the title and the tabs, e.g. usage hints.</summary>
+    [Parameter] public RenderFragment? Description { get; set; }
+
+    private List<WaxTabItem> _tabs = [];
+
+    protected override void OnParametersSet()
+    {
+        _tabs =
+        [
+            new("Preview", Content: Preview, Icon: "monitor-dot"),
+            new("Code", Content: BuildCodeBlock(), Icon: "code"),
+        ];
+    }
+
+    private RenderFragment BuildCodeBlock()
+    {
+        return @<pre class="bg-muted rounded-xl p-4 overflow-x-auto text-sm"><code>@Code</code></pre>;
+    }
+}
