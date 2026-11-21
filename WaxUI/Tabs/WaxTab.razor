@@ -46,7 +46,11 @@
              role="tabpanel"
              aria-labelledby="@GetTabId(CurrentIndex)"
              tabindex="0">
-            @Tabs[CurrentIndex].Content
+            @* Keyed by the active index: switching tabs recreates the wrapper, which
+               replays the entrance fade on the new content. *@
+            <div @key="CurrentIndex" class="@PanelEnterClass">
+                @Tabs[CurrentIndex].Content
+            </div>
         </div>
     }
 </div>
@@ -54,6 +58,11 @@
 @code {
     private static readonly KhamsinClass BaseTabListClass = Cn.Of("flex border-b-2 border-border");
     private static readonly KhamsinClass BaseTabButtonClass = Cn.Of("inline-flex items-center gap-2 px-4 py-4 text-sm font-medium transition-all duration-200 cursor-pointer relative");
+
+    // animate-wax-fade (opacity-only, khamsin.json) instead of animate-in: the shared enter
+    // keyframes carry a transform, and a transform on this wrapper would make it the containing
+    // block for position:fixed demo content (popovers) during and shortly after the fade.
+    private static readonly KhamsinClass PanelEnterClass = Cn.Of("animate-wax-fade duration-150");
 
     private readonly string _componentId = $"wax-tab-{Guid.NewGuid():N}";
     private int _activeIndex;

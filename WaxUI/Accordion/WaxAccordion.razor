@@ -27,12 +27,16 @@
                     </div>
                     <LucideIcon Name="chevron-down" ClassName="@Cn.Of("shrink-0 text-muted-foreground transition-transform duration-300", (isOpen, "rotate-180")).Value" />
                 </button>
-                <div class="@Cn.Of("overflow-hidden transition-all duration-300 ease-in-out", (isOpen, "max-h-48 opacity-100", "max-h-0 opacity-0")).Value">
-                    <p class="px-6 pb-5 text-sm text-muted-foreground leading-relaxed">
-                        @item.Body
-                    </p>
-                </div>
-            </div>
+                <div class="@BodyClass(isOpen)">
+                    @* The direct child is the collapsing grid item: it must carry no padding of
+                       its own, or the 0fr track stops at the padding instead of collapsing to
+                       zero. Padding lives on the paragraph inside it. *@
+                    <div class="min-h-0 overflow-hidden">
+                        <p class="@Cn.Of("px-6 pb-5 text-sm text-muted-foreground leading-relaxed transition-opacity duration-300", (isOpen, "opacity-100", "opacity-0")).Value">
+                            @item.Body
+                        </p>
+                    </div>
+                </div></div>
             index++;
         }
     }
@@ -43,6 +47,11 @@
     [Parameter] public int DefaultOpenIndex { get; set; }
 
     private string CssClass => Cn.Of("divide-y divide-border rounded-3xl overflow-hidden border border-border", Class).Value;
+
+    // Marker classes for the grid-rows height animation live in app.css; concatenated
+    // outside Cn.Of because Khamsin only knows utilities (same pattern as .wax-transition-filter).
+    private static string BodyClass(bool isOpen) =>
+        "wax-accordion-body" + (isOpen ? " wax-accordion-open" : string.Empty);
 
     private int? _openIndex;
 

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using WaxUI.Services;
+using WaxUI.Utils;
 
 namespace WaxUI.ColorPicker;
 
@@ -485,8 +486,8 @@ public abstract class WaxColorPickerBase : WaxComponent, IAsyncDisposable
             KhamsinClass variantClass = Variant switch
             {
                 WaxColorPickerVariant.Inline => Cn.Of(WaxColorPickerStyles.Panel, "w-[300px] max-w-full"),
-                WaxColorPickerVariant.Popover => Cn.Of(WaxColorPickerStyles.Panel, "absolute left-0 right-0 top-full z-[95] mt-2 w-full"),
-                WaxColorPickerVariant.Swatch => Cn.Of(WaxColorPickerStyles.Panel, "absolute left-1/2 top-full z-[95] mt-2 w-[300px] max-w-[calc(100vw_-_2rem)] -translate-x-1/2"),
+                WaxColorPickerVariant.Popover => Cn.Of(WaxColorPickerStyles.Panel, "absolute left-0 right-0 top-full z-[95] mt-2 w-full", WaxMotion.DropdownEnter),
+                WaxColorPickerVariant.Swatch => Cn.Of(WaxColorPickerStyles.Panel, "absolute left-1/2 top-full z-[95] mt-2 w-[300px] max-w-[calc(100vw_-_2rem)] -translate-x-1/2", WaxMotion.DropdownEnter),
                 _ => throw new ArgumentOutOfRangeException(nameof(Variant)),
             };
 

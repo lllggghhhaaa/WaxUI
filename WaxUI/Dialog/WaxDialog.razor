@@ -15,7 +15,7 @@
         style="@Style"
         @attributes="AdditionalAttributes">
     <WaxCard Variant="WaxCardVariant.Elevated" Hoverable="false"
-             Class="flex max-h-[inherit] flex-col overflow-hidden">
+             Class="@CardClass">
         @if (!string.IsNullOrEmpty(Title))
         {
             <h3 class="mb-1.5 mt-0 shrink-0 text-lg">@Title</h3>
@@ -147,13 +147,19 @@
     {
         get
         {
+            // .wax-dialog drives the enter/exit animations (app.css); dialog.ts adds
+            // .wax-dialog-closing and closes only once they have finished. Marker classes
+            // concatenate outside Cn.Of because Khamsin only knows utilities.
             return Cn.Of(
                 "fixed left-1/2 z-[75] m-0 w-[min(440px,calc(100vw_-_32px))] max-h-[min(640px,calc(100vh_-_64px))]",
                 "overflow-visible border-0 bg-transparent p-0 text-current backdrop:bg-foreground/45",
                 AlignTop ? "top-[10vh] -translate-x-1/2" : "top-1/2 -translate-x-1/2 -translate-y-1/2",
-                BackdropClass, Class).Value;
+                BackdropClass, Class).Value + " wax-dialog";
         }
     }
+
+    private string CardClass =>
+        Cn.Of("flex max-h-[inherit] flex-col overflow-hidden").Value + " wax-dialog-card";
 
     private DotNetObjectReference<WaxDialog> SelfRef => _selfRef ??= DotNetObjectReference.Create(this);
 

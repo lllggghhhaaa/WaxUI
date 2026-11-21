@@ -11,6 +11,8 @@ interface DialogState {
     removers: (() => void)[];
     modal: boolean;
     dotnet: WaxDialogCallback;
+    closing: boolean;
+    cancelExit: (() => void) | null;
 }
 
 const states = new WeakMap<HTMLDialogElement, DialogState>();
@@ -57,10 +59,16 @@ export function show(
     dotnet: WaxDialogCallback,
     options: WaxDialogOpenOptions,
 ): void {
-    if (dialog.open || states.has(dialog)) return;
+    const existing = states.get(dialog);
+    if (dialog.open || existing) {
+        // Reopened while the exit animation is still playing: cancel it so the
+        // dialog never visibly flickers closed before staying up.
+        existing?.cancelExit?.();
+        return;
+    }
 
     const removers: (() => void)[] = [];
-    states.set(dialog, { removers, modal: options.modal, dotnet });
+    states.set(dialog, { removers, modal: options.modal, dotnet, closing: false, cancelExit: null });
 
     on(dialog, "cancel", (e) => {
         e.preventDefault();
@@ -88,15 +96,56 @@ export function show(
 }
 
 export function hide(dialog: HTMLDialogElement): void {
-    if (dialog.open) {
-        dialog.close();
-    } else {
+    const state = states.get(dialog);
+    if (!state) return;
+
+    if (!dialog.open) {
         closeOut(dialog, true);
+        return;
+    }
+
+    if (state.closing) return;
+    state.closing = true;
+    dialog.classList.add("wax-dialog-closing");
+
+    // Exit animations (element, ::backdrop, card) are defined in app.css on
+    // .wax-dialog-closing; close only once they have finished so the dialog is
+    // never torn down mid-fade. The timer is the fallback when getAnimations
+    // is unavailable or reports nothing.
+    let finished = false;
+    const finish = (): void => {
+        if (finished) return;
+        finished = true;
+        dialog.classList.remove("wax-dialog-closing");
+        dialog.close();
+    };
+
+    const timer = window.setTimeout(finish, 400);
+    state.cancelExit = () => {
+        if (finished) return;
+        finished = true;
+        window.clearTimeout(timer);
+        state.closing = false;
+        dialog.classList.remove("wax-dialog-closing");
+    };
+
+    const animations =
+        typeof dialog.getAnimations === "function"
+            ? dialog.getAnimations({ subtree: true }).map((a) => a.finished)
+            : [];
+
+    if (animations.length > 0) {
+        void Promise.allSettled(animations).then(() => {
+            window.clearTimeout(timer);
+            finish();
+        });
     }
 }
 
 export function dispose(dialog: HTMLDialogElement): void {
-    if (!states.has(dialog)) return;
+    const state = states.get(dialog);
+    if (!state) return;
+    state.cancelExit?.();
     closeOut(dialog, false);
     if (dialog.open) dialog.close();
 }

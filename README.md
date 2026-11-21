@@ -93,6 +93,10 @@ Inject `IThemeService` to change the theme at runtime:
 
 Modes: `ThemeMode.System`, `ThemeMode.Light`, `ThemeMode.Dark`.
 
+### Motion
+
+Components share one motion vocabulary: durations on Khamsin's `duration-150/200/300` scale, the named `ease-emphasized` / `ease-emphasized-accelerate` curves from khamsin.json, overlay entrances/exits, and central `prefers-reduced-motion` support (defined once in the library's app.css). Custom animation keyframes can be added to your own `khamsin.json` `animations` block the same way WaxUI defines `caret-blink` and `wax-indeterminate`.
+
 ## Runtime services
 
 `AddWaxUI()` registers scoped services for UI that lives outside the component that

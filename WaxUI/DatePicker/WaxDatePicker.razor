@@ -154,7 +154,8 @@
         _open ? "rotate-180" : null).Value;
 
     private string PanelClass =>
-        Cn.Of("absolute right-0 z-30 mt-2 w-[19rem] max-w-[calc(100vw_-_2rem)] rounded-3xl border border-border bg-popover p-3 text-popover-foreground shadow-xl").Value;
+        Cn.Of("absolute right-0 z-30 mt-2 w-[19rem] max-w-[calc(100vw_-_2rem)] rounded-3xl border border-border bg-popover p-3 text-popover-foreground shadow-xl",
+            WaxMotion.DropdownEnter).Value;
 
     private static readonly string NavButtonClass =
         Cn.Of("flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground").Value;

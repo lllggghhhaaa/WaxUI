@@ -4,17 +4,33 @@
 @inherits WaxComponent
 
 <div class="@CssClass" style="@Style" @attributes="AdditionalAttributes">
-    <div
-        class="h-full rounded-full transition-all duration-700"
-        style="@TrackStyle"></div>
+    @if (Indeterminate)
+    {
+        @* Sweeping bar (keyframes in khamsin.json): 40% wide, gliding across the
+           clipped track from off-left to off-right. *@
+        <div class="w-2/5 h-full rounded-full animate-wax-indeterminate"
+             style="@IndeterminateStyle"></div>
+    }
+    else
+    {
+        <div
+            class="h-full rounded-full transition-all duration-700"
+            style="@TrackStyle"></div>
+    }
 </div>
 
 @code {
     [Parameter] public int Value { get; set; }
+
+    /// <summary>Loops a sweeping bar instead of binding to <see cref="Value"/>; use for unknown durations.</summary>
+    [Parameter] public bool Indeterminate { get; set; }
+
     [Parameter] public WaxColor Color { get; set; } = WaxColor.Primary;
 
     private string CssClass => 
         Cn.Of("w-full bg-muted rounded-full h-2 overflow-hidden", Class).Value;
 
     private string TrackStyle => $"width: {Value}%; background-color: {Color.CssValue};";
+
+    private string IndeterminateStyle => $"background-color: {Color.CssValue};";
 }

@@ -1,4 +1,5 @@
 using WaxUI.Services;
+using WaxUI.Utils;
 
 namespace WaxUI.Alert;
 
@@ -99,6 +100,11 @@ public sealed class WaxAlertService : IWaxAlertService
     private async Task RemoveWhenDismissedAsync(WaxAlertInstance alert)
     {
         await alert.Dismissed;
+
+        // Keep the dismissed instance in the store long enough for the outlet to
+        // play its exit animation (it renders dismissed alerts with animate-out
+        // classes keyed on IsDismissed), then drop it.
+        await Task.Delay(WaxMotion.ExitMs);
         _alerts.Remove(alert);
     }
 

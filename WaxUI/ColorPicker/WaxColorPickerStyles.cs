@@ -1,4 +1,5 @@
 ﻿using Khamsin;
+using WaxUI.Utils;
 
 namespace WaxUI.ColorPicker;
 
@@ -39,7 +40,8 @@ internal static class WaxColorPickerStyles
         Cn.Of("flex cursor-pointer items-center gap-1 rounded-md px-1 py-0.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed").Value;
 
     public static readonly KhamsinClass FormatMenu =
-        Cn.Of("absolute left-0 top-full z-[95] mt-1.5 w-28 rounded-xl border border-border bg-popover p-1 text-popover-foreground shadow-2xl shadow-black/15").Value;
+        Cn.Of("absolute left-0 top-full z-[95] mt-1.5 w-28 rounded-xl border border-border bg-popover p-1 text-popover-foreground shadow-2xl shadow-black/15",
+            WaxMotion.DropdownEnter).Value;
 
     public static readonly KhamsinClass FormatOption =
         Cn.Of("block w-full cursor-pointer rounded-lg px-3 py-1.5 text-left text-sm transition-colors hover:bg-muted").Value;

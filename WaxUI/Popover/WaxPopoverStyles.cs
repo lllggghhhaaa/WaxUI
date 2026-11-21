@@ -1,4 +1,5 @@
 using Khamsin;
+using WaxUI.Utils;
 
 namespace WaxUI.Popover;
 
@@ -12,7 +13,7 @@ internal static class WaxPopoverStyles
         Cn.Of("fixed z-[96] max-w-[calc(100vw_-_1rem)] rounded-3xl border border-border bg-popover text-popover-foreground shadow-2xl shadow-black/15");
 
     public static readonly KhamsinClass Enter =
-        Cn.Of("animate-in fade-in-0 zoom-in-95 duration-150");
+        Cn.Of(WaxMotion.PanelEnter);
 
     public static string Arrow(string? appliedPlacement)
     {

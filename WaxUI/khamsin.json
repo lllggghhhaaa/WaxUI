@@ -14,6 +14,10 @@
     "lg": "var(--radius)",
     "xl": "calc(var(--radius) + 4px)"
   },
+  "eases": {
+    "emphasized": "cubic-bezier(0.2, 0, 0, 1)",
+    "emphasized-accelerate": "cubic-bezier(0.3, 0, 0.8, 0.15)"
+  },
   "colors": {
     "background": "var(--background)",
     "foreground": "var(--foreground)",
@@ -58,6 +62,19 @@
       "keyframes": {
         "0%,70%,100%": "opacity:1",
         "20%,50%": "opacity:0"
+      }
+    },
+    "wax-fade": {
+      "value": "wax-fade var(--tw-duration,0.15s) var(--ease-out) backwards",
+      "keyframes": {
+        "from": "opacity:0"
+      }
+    },
+    "wax-indeterminate": {
+      "value": "wax-indeterminate 1.4s ease-in-out infinite",
+      "keyframes": {
+        "0%": "transform:translateX(-110%)",
+        "100%": "transform:translateX(360%)"
       }
     }
   }

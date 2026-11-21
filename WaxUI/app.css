@@ -75,6 +75,20 @@
         font-weight: var(--font-weight-normal);
         line-height: 1.5;
     }
+
+    /* Respect the OS reduce-motion preference once for the whole library: every
+       animation and transition collapses to an instant state change, looping
+       animations (caret, indeterminate progress) settle on their end state. */
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+    }
 }
 
 /* Utility classes for scrollbars. */
@@ -158,5 +172,84 @@
     .wax-transition-filter {
         transition-property: filter;
         transition-timing-function: var(--ease-out);
+    }
+
+    /* WaxDialog enter/exit. The <dialog> element only fades - it owns the centering
+       translate utilities, so transform keyframes must stay off it; the inner card
+       scales. Because the element is always mounted and merely flips between
+       display:none and open, the animations replay on every show. dialog.ts adds
+       .wax-dialog-closing, waits for the animations to finish, then calls close(). */
+    .wax-dialog {
+        animation: wax-dialog-fade-in 150ms var(--ease-out) both;
+    }
+
+    .wax-dialog::backdrop {
+        animation: wax-dialog-backdrop-in 200ms var(--ease-out) both;
+    }
+
+    .wax-dialog-card {
+        animation: wax-dialog-card-in 200ms var(--ease-emphasized) both;
+    }
+
+    .wax-dialog.wax-dialog-closing {
+        animation: wax-dialog-fade-out 150ms var(--ease-out) both;
+    }
+
+    .wax-dialog.wax-dialog-closing::backdrop {
+        animation: wax-dialog-backdrop-out 150ms var(--ease-out) both;
+    }
+
+    .wax-dialog.wax-dialog-closing .wax-dialog-card {
+        animation: wax-dialog-card-out 150ms var(--ease-emphasized-accelerate) both;
+    }
+
+    @keyframes wax-dialog-fade-in {
+        from { opacity: 0; }
+    }
+
+    @keyframes wax-dialog-fade-out {
+        to { opacity: 0; }
+    }
+
+    @keyframes wax-dialog-backdrop-in {
+        from { opacity: 0; }
+    }
+
+    @keyframes wax-dialog-backdrop-out {
+        to { opacity: 0; }
+    }
+
+    @keyframes wax-dialog-card-in {
+        from {
+            opacity: 0;
+            transform: scale(0.96);
+        }
+    }
+
+    @keyframes wax-dialog-card-out {
+        to {
+            opacity: 0;
+            transform: scale(0.97);
+        }
+    }
+
+    /* WaxAccordion bodies animate at their real content height via the 0fr -> 1fr
+       grid-rows trick; a fixed max-height would clip tall bodies mid-animation. The
+       direct child is what collapses, so it must be allowed to shrink to zero AND
+       carry no padding of its own - the child's padding would keep the 0fr track
+       from collapsing to zero. Padding belongs on descendants of the child. */
+    .wax-accordion-body {
+        display: grid;
+        grid-template-rows: 0fr;
+        transition: grid-template-rows 300ms var(--ease-emphasized);
+    }
+
+    .wax-accordion-open {
+        grid-template-rows: 1fr;
+    }
+
+    .wax-accordion-body > * {
+        min-height: 0;
+        overflow: hidden;
     }
 }

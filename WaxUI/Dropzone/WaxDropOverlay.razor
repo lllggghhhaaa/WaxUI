@@ -66,7 +66,9 @@
         ? Cn.Of("relative", Class).Value
         : Cn.Of(
             IsVisible
-                ? "fixed inset-0 z-[90] flex items-center justify-center bg-background/80 p-6 backdrop-blur-sm pointer-events-none"
+                // The root toggles between display:none and flex, so the animation
+                // replays on every show (WaxMotion exit is not needed: drags end abruptly).
+                ? "fixed inset-0 z-[90] flex animate-in items-center justify-center bg-background/80 p-6 fade-in duration-150 ease-emphasized backdrop-blur-sm pointer-events-none"
                 : "hidden",
             Class).Value;
 
@@ -78,7 +80,7 @@
             {
                 return Cn.Of(
                     "pointer-events-none absolute inset-0 z-[90] flex flex-col items-center justify-center rounded-[inherit] border-2 border-dashed border-primary bg-card/90 p-4 text-center backdrop-blur-sm",
-                    IsVisible ? null : "hidden").Value;
+                    IsVisible ? "animate-in fade-in duration-150 ease-emphasized" : "hidden").Value;
             }
 
             return Cn.Of("pointer-events-none flex w-full max-w-md flex-col items-center rounded-3xl border-2 border-dashed border-primary bg-card/95 px-8 py-12 text-center shadow-xl").Value;
